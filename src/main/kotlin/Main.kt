@@ -4,8 +4,8 @@ import com.jessecorbett.diskord.dsl.*
 import com.jessecorbett.diskord.util.mention
 import com.jessecorbett.diskord.util.sendMessage
 import com.jessecorbett.diskord.util.words
-import io.github.potatocurry.api.Kwizlet
-import io.github.potatocurry.api.Set
+import io.github.potatocurry.kwizlet.api.Kwizlet
+import io.github.potatocurry.kwizlet.api.Set
 
 fun main() {
     val activeGames = mutableMapOf<String, QuizGame>()
