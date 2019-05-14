@@ -16,10 +16,10 @@ fun main() {
                 val quizGame = QuizGame(words[1])
                 activeGames[channelId] = quizGame
                 reply {
-                    title = quizGame.set.getTitle()
-                    description = quizGame.set.getDescription()
-                    author = EmbedAuthor(quizGame.set.getAuthor())
-                    field("Total Terms", quizGame.set.getTermCount().toString(), false)
+                    title = quizGame.set.title
+                    description = quizGame.set.description
+                    author = EmbedAuthor(quizGame.set.author)
+                    field("Total Terms", quizGame.set.termCount.toString(), false)
                 }
                 reply(quizGame.nextDefinition())
             }
@@ -55,7 +55,7 @@ class QuizGame(setID: String) {
     init {
         val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
         set = kwizlet.getSet(setID)
-        termMap = set.getTermMap().toSortedMap(String.CASE_INSENSITIVE_ORDER)
+        termMap = set.termMap.toSortedMap(String.CASE_INSENSITIVE_ORDER)
         shuffledDefinitions = termMap.values.shuffled().iterator()
     }
 
