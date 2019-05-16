@@ -1,3 +1,4 @@
+import com.beust.klaxon.toInt
 import com.jessecorbett.diskord.api.model.User
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.dsl.*
@@ -37,16 +38,15 @@ fun main() {
                 }
                 val question = kahootGame.next()
                 val send = StringBuilder(question.question)
-                question.choices.forEach {
-                    send.append("${it.answer}\n")
-                }
+                for (i in 0 until question.answerCount)
+                    send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
                 reply(send.toString())
             }
         }
 
         messageCreated { message ->
             if (activeGames.containsKey(message.channelId)) {
-                if (/*activeGames[message.channelId]!!::class.simpleName == "QuizletGame"*/ activeGames[message.channelId]!! is QuizletGame) {
+                if (activeGames[message.channelId]!! is QuizletGame) {
                     val quizGame = activeGames[message.channelId]!! as QuizletGame
                     if (quizGame.check(message.content)) {
                         quizGame.incScore(message.author)
@@ -68,9 +68,8 @@ fun main() {
                         if (kahootGame.hasNext()) {
                             val question = kahootGame.next()
                             val send = StringBuilder(question.question)
-                            question.choices.forEach {
-                                send.append("${it.answer}\n")
-                            }
+                            for (i in 0 until question.answerCount)
+                                send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
                             message.channel.sendMessage(send.toString())
                         } else {
                             activeGames.remove(message.channelId)
@@ -99,7 +98,6 @@ abstract class Game {
 }
 
 class QuizletGame(setID: String): Game() {
-    val type = "Quizlet"
     val set: Set
     private val termMap: Map<String, String>
     private val shuffledDefinitions: Iterator<String>
@@ -128,10 +126,9 @@ class QuizletGame(setID: String): Game() {
 }
 
 class KahootGame(quizID: String): Game() {
-    val type = "Kahoot"
     val quiz: Quiz
-    val questions: Iterator<Question>
-    var currentQuestion: Question?
+    private val questions: Iterator<Question>
+    private var currentQuestion: Question?
 
     init {
         val kashoot = Kashoot()
@@ -149,7 +146,13 @@ class KahootGame(quizID: String): Game() {
         return currentQuestion!!
     }
 
-    fun check(answer: String): Boolean {
-        return answer == currentQuestion!!.choices.singleOrNull { it.correct }!!.answer
+    fun check(answer: String?): Boolean {
+        println(answer)
+        val charAnswer = answer?.toUpperCase()?.toCharArray()?.singleOrNull()
+        if (currentQuestion != null && charAnswer?.isLetter() == true && charAnswer.toInt() - 65 < currentQuestion!!.answerCount) {
+            println(charAnswer)
+            return currentQuestion!!.choices[charAnswer.toInt() - 65] == currentQuestion?.choices?.singleOrNull{ it.correct }!!
+        }
+        return false
     }
 }
