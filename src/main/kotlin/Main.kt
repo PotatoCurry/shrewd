@@ -146,7 +146,7 @@ class KahootGame(quizID: String): Game() {
 
     fun check(answer: String?): Boolean {
         println(answer)
-        val charAnswer = answer?.toUpperCase()?.toCharArray()?.singleOrNull()
+        val charAnswer = answer?.toUpperCase()?.toCharArray()?.single()
         if (currentQuestion != null && charAnswer?.isLetter() == true && charAnswer.toInt() - 65 < currentQuestion!!.answerCount) {
             return currentQuestion!!.choices[charAnswer.toInt() - 65].answer == currentQuestion?.correctAnswer
         }
