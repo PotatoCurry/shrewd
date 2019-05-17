@@ -15,7 +15,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "com.jessecorbett:diskord:1.3.3"
     implementation "com.github.PotatoCurry:Kwizlet:0.4.1"
-    implementation "com.github.PotatoCurry:Kashoot:-SNAPSHOT"
+    implementation "com.github.PotatoCurry:Kashoot:0.1.1"
 }
 
 compileKotlin {

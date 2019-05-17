@@ -1,4 +1,3 @@
-import com.beust.klaxon.toInt
 import com.jessecorbett.diskord.api.model.User
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.dsl.*
@@ -93,7 +92,7 @@ abstract class Game {
 
     fun incScore(user: User) {
         if (scores[user]?.inc() == null)
-            scores[user] = 0
+            scores[user] = 1
     }
 }
 
@@ -149,8 +148,7 @@ class KahootGame(quizID: String): Game() {
         println(answer)
         val charAnswer = answer?.toUpperCase()?.toCharArray()?.singleOrNull()
         if (currentQuestion != null && charAnswer?.isLetter() == true && charAnswer.toInt() - 65 < currentQuestion!!.answerCount) {
-            println(charAnswer)
-            return currentQuestion!!.choices[charAnswer.toInt() - 65] == currentQuestion?.choices?.singleOrNull{ it.correct }!!
+            return currentQuestion!!.choices[charAnswer.toInt() - 65].answer == currentQuestion?.correctAnswer
         }
         return false
     }
