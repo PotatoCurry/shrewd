@@ -104,7 +104,6 @@ class QuizletGame(setID: String): Game() {
     var currentDefinition = ""
 
     init {
-
         val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
         set = kwizlet.getSet(setID)
         termMap = set.termMap.toSortedMap(String.CASE_INSENSITIVE_ORDER)
