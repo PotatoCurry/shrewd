@@ -152,4 +152,29 @@ class KahootGame(quizID: String): Game() {
         }
         return false
     }
+
+// TODO: Revisit emoji kahoot reactions when Diskord adds such functionality
+
+//    suspend fun start(channel: ChannelClient) {
+//        channel.sendMessage("Starting game @here") {
+//            title = quiz.title
+//            description = quiz.description
+//            author = EmbedAuthor(quiz.creator)
+//            field("Total Terms", quiz.questions.size.toString(), false)
+//        }
+//        while (questions.hasNext()) {
+//            val question = questions.next()
+//            channel.sendMessage(question.question)
+//            delay(2500)
+//            val send = StringBuilder()
+//            for (i in 0 until question.answerCount)
+//                send.append("${(65 + i).toChar()}. ${question.choices[i].answer}\n") // TODO: Use regional indicator emoji
+//            send.append("React your answer below!")
+//            val message = channel.sendMessage(send.toString())
+//            delay(5000)
+//            val reactions = message.reactions
+//            channel.sendMessage("\"${question.correctAnswer}\" was the correct answer") // TODO: Make DSL with everyone's results
+//
+//        }
+//    }
 }
