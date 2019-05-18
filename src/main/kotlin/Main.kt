@@ -1,6 +1,7 @@
 import com.jessecorbett.diskord.api.model.User
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.dsl.*
+import com.jessecorbett.diskord.util.isFromBot
 import com.jessecorbett.diskord.util.mention
 import com.jessecorbett.diskord.util.sendMessage
 import com.jessecorbett.diskord.util.words
@@ -56,7 +57,7 @@ fun main() {
         }
 
         messageCreated { message ->
-            if (activeGames.containsKey(message.channelId)) {
+            if (!message.isFromBot && activeGames.containsKey(message.channelId)) {
                 if (activeGames[message.channelId]!! is QuizletGame) {
                     val quizGame = activeGames[message.channelId]!! as QuizletGame
                     if (quizGame.check(message.content)) {
@@ -102,6 +103,8 @@ abstract class Game(val creator: User) {
 
     abstract fun next(): Any
 
+    abstract fun check(answer: String): Boolean
+
     fun incScore(user: User) {
         if (scores[user] == null)
             scores[user] = 0
@@ -131,7 +134,7 @@ class QuizletGame(creator: User, setID: String): Game(creator) {
         return currentDefinition
     }
 
-    fun check(term: String): Boolean {
+    override fun check(term: String): Boolean {
         return termMap[term] == currentDefinition
     }
 }
@@ -156,10 +159,9 @@ class KahootGame(creator: User, quizID: String): Game(creator) {
         return currentQuestion
     }
 
-    fun check(answer: String?): Boolean {
-        println(answer)
-        val charAnswer = answer?.toUpperCase()?.toCharArray()?.single()
-        if (charAnswer?.isLetter() == true && charAnswer.toInt() - 65 < currentQuestion.answerCount) {
+    override fun check(answer: String): Boolean {
+        val charAnswer = answer.toUpperCase().toCharArray().single()
+        if (charAnswer.isLetter() && charAnswer.toInt() - 65 < currentQuestion.answerCount) {
             return currentQuestion.choices[charAnswer.toInt() - 65].answer == currentQuestion.correctAnswer
         }
         return false
