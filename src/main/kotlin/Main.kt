@@ -16,7 +16,7 @@ fun main() {
     bot(System.getenv("shrewddiscordtoken")) {
         commands(">") {
             command("quizlet") {
-                val quizGame = QuizletGame(words[1])
+                val quizGame = QuizletGame(author, words[1])
                 activeGames[channelId] = quizGame
                 reply {
                     title = quizGame.set.title
@@ -27,7 +27,7 @@ fun main() {
                 reply(quizGame.next())
             }
             command("kahoot") {
-                val kahootGame = KahootGame(words[1])
+                val kahootGame = KahootGame(author, words[1])
                 activeGames[channelId] = kahootGame
                 reply {
                     title = kahootGame.quiz.title
@@ -40,6 +40,18 @@ fun main() {
                 for (i in 0 until question.answerCount)
                     send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
                 reply(send.toString())
+            }
+            command("abort") {
+                val game = activeGames.remove(channelId)
+                when {
+                    game == null -> reply("No game running in this channel")
+                    author != game.creator -> reply("Only the game creator can abort the game")
+                    else -> {
+                        activeGames.remove(channelId, game)
+                        val winner = game.scores.maxBy{ it.value }?.key
+                        reply("Aborted game - ${winner?.mention} had the highest score with ${game.scores[winner]} points")
+                    }
+                }
             }
         }
 
@@ -61,7 +73,7 @@ fun main() {
                     }
                 } else {
                     val kahootGame = activeGames[message.channelId]!! as KahootGame
-                    if (kahootGame.check(message.content)) {
+                    if (message.content.length == 1 && kahootGame.check(message.content)) {
                         kahootGame.incScore(message.author)
                         message.react("✅")
                         if (kahootGame.hasNext()) {
@@ -83,7 +95,7 @@ fun main() {
     }.block()
 }
 
-abstract class Game {
+abstract class Game(val creator: User) {
     val scores = mutableMapOf<User, Int>()
 
     abstract fun hasNext(): Boolean
@@ -91,16 +103,17 @@ abstract class Game {
     abstract fun next(): Any
 
     fun incScore(user: User) {
-        if (scores[user]?.inc() == null)
-            scores[user] = 1
+        if (scores[user] == null)
+            scores[user] = 0
+        scores[user] = scores[user]!! + 1
     }
 }
 
-class QuizletGame(setID: String): Game() {
+class QuizletGame(creator: User, setID: String): Game(creator) {
     val set: Set
     private val termMap: Map<String, String>
     private val shuffledDefinitions: Iterator<String>
-    var currentDefinition = ""
+    private lateinit var currentDefinition: String
 
     init {
         val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
@@ -123,16 +136,15 @@ class QuizletGame(setID: String): Game() {
     }
 }
 
-class KahootGame(quizID: String): Game() {
+class KahootGame(creator: User, quizID: String): Game(creator) {
     val quiz: Quiz
     private val questions: Iterator<Question>
-    private var currentQuestion: Question?
+    private lateinit var currentQuestion: Question
 
     init {
         val kashoot = Kashoot()
         quiz = kashoot.getQuiz(quizID)
         questions = quiz.questions.shuffled().iterator()
-        currentQuestion = null
     }
 
     override fun hasNext(): Boolean {
@@ -141,14 +153,14 @@ class KahootGame(quizID: String): Game() {
 
     override fun next(): Question {
         currentQuestion = questions.next()
-        return currentQuestion!!
+        return currentQuestion
     }
 
     fun check(answer: String?): Boolean {
         println(answer)
         val charAnswer = answer?.toUpperCase()?.toCharArray()?.single()
-        if (currentQuestion != null && charAnswer?.isLetter() == true && charAnswer.toInt() - 65 < currentQuestion!!.answerCount) {
-            return currentQuestion!!.choices[charAnswer.toInt() - 65].answer == currentQuestion?.correctAnswer
+        if (charAnswer?.isLetter() == true && charAnswer.toInt() - 65 < currentQuestion.answerCount) {
+            return currentQuestion.choices[charAnswer.toInt() - 65].answer == currentQuestion.correctAnswer
         }
         return false
     }
