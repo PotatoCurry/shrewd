@@ -113,7 +113,7 @@ abstract class Game(val creator: User) {
 }
 
 class QuizletGame(creator: User, setID: String): Game(creator) {
-    val set: Set
+    val set: Set // TODO: Rename to quiz and put in Game superclass?
     private val termMap: Map<String, String>
     private val shuffledDefinitions: Iterator<String>
     private lateinit var currentDefinition: String
@@ -134,8 +134,8 @@ class QuizletGame(creator: User, setID: String): Game(creator) {
         return currentDefinition
     }
 
-    override fun check(term: String): Boolean {
-        return termMap[term] == currentDefinition
+    override fun check(answer: String): Boolean {
+        return termMap[answer] == currentDefinition
     }
 }
 
@@ -167,7 +167,7 @@ class KahootGame(creator: User, quizID: String): Game(creator) {
         return false
     }
 
-// TODO: Revisit emoji kahoot reactions when Diskord adds such functionality
+// TODO: Revisit emoji kahoot reactions when Diskord adds rich reactions or use newReaction events
 
 //    suspend fun start(channel: ChannelClient) {
 //        channel.sendMessage("Starting game @here") {
