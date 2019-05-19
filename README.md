@@ -7,3 +7,6 @@ A bot with a focus on educational commands and games
 
 ### Quizlet integration
 shrewd uses the [Kwizlet](https://github.com/PotatoCurry/Kwizlet) library to fetch Quizlet set data.
+
+### Kahoot integration
+shrewd uses the [Kashoot](https://github.com/PotatoCurry/Kashoot) library to fetch Kahoot quiz data.
