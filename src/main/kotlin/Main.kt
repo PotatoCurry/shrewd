@@ -67,9 +67,12 @@ fun main() {
                             message.channel.sendMessage(quizGame.next())
                         } else {
                             activeGames.remove(message.channelId)
-                            // TODO: Make embed for this
-                            val winner = quizGame.scores.maxBy{ it.value }?.key
-                            message.channel.sendMessage("${winner?.mention} won with ${quizGame.scores[winner]} points!")
+                            val sortedScores = quizGame.scores.toSortedMap(compareByDescending{ quizGame.scores[it] })
+                            message.channel.sendMessage("") {
+                                title = "Game Results"
+                                for (scores in sortedScores.entries.withIndex())
+                                    field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
+                            }
                         }
                     }
                 } else {
@@ -85,9 +88,13 @@ fun main() {
                             message.channel.sendMessage(send.toString())
                         } else {
                             activeGames.remove(message.channelId)
-                            // TODO: Make embed for this
-                            val winner = kahootGame.scores.maxBy{ it.value }?.key
-                            message.channel.sendMessage("${winner?.mention} won with ${kahootGame.scores[winner]} points!")
+                            val sortedScores = kahootGame.scores.toSortedMap(compareByDescending{ kahootGame.scores[it] })
+                            message.channel.sendMessage("") {
+                                title = "Game Results"
+                                for (scores in sortedScores.entries.withIndex()) {
+                                    field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
+                                }
+                            }
                         }
                     }
                 }
@@ -162,7 +169,7 @@ class KahootGame(creator: User, quizID: String): Game(creator) {
     override fun check(answer: String): Boolean {
         val charAnswer = answer.toUpperCase().toCharArray().single()
         if (charAnswer.isLetter() && charAnswer.toInt() - 65 < currentQuestion.answerCount) {
-            return currentQuestion.choices[charAnswer.toInt() - 65].answer == currentQuestion.correctAnswer
+            return currentQuestion.correctAnswers.contains(currentQuestion.choices[charAnswer.toInt() - 65].answer)
         }
         return false
     }
