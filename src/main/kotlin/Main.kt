@@ -11,6 +11,7 @@ import io.github.potatocurry.kashoot.api.Quiz
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import io.github.potatocurry.kwizlet.api.Set
 import kotlinx.coroutines.delay
+import java.net.URI
 
 fun main() {
     val activeGames = mutableMapOf<String, Game>()
@@ -18,7 +19,9 @@ fun main() {
     bot(System.getenv("shrewddiscordtoken")) {
         commands(">") {
             command("quizlet") {
-                val quizGame = QuizletGame(author, words[1])
+                val quizletPath = URI(words[1]).path.split("/")
+                val setID = quizletPath.first()
+                val quizGame = QuizletGame(author, setID)
                 activeGames[channelId] = quizGame
                 reply {
                     title = quizGame.set.title
@@ -30,7 +33,9 @@ fun main() {
                 reply(quizGame.next())
             }
             command("kahoot") {
-                val kahootGame = KahootGame(author, words[1])
+                val kahootPath = URI(words[1]).path.split("/")
+                val quizID = kahootPath.last()
+                val kahootGame = KahootGame(author, quizID)
                 activeGames[channelId] = kahootGame
                 reply {
                     title = kahootGame.quiz.title
