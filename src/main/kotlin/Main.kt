@@ -10,6 +10,7 @@ import io.github.potatocurry.kashoot.api.Question
 import io.github.potatocurry.kashoot.api.Quiz
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import io.github.potatocurry.kwizlet.api.Set
+import kotlinx.coroutines.delay
 
 fun main() {
     val activeGames = mutableMapOf<String, Game>()
@@ -25,6 +26,7 @@ fun main() {
                     author = EmbedAuthor(quizGame.set.author)
                     field("Total Terms", quizGame.set.termCount.toString(), false)
                 }
+                delay(2500)
                 reply(quizGame.next())
             }
             command("kahoot") {
@@ -36,6 +38,7 @@ fun main() {
                     author = EmbedAuthor(kahootGame.quiz.creator)
                     field("Total Terms", kahootGame.quiz.questions.size.toString(), false)
                 }
+                delay(2500)
                 val question = kahootGame.next()
                 val send = StringBuilder(question.question)
                 for (i in 0 until question.answerCount)
@@ -64,6 +67,7 @@ fun main() {
                         quizGame.incScore(message.author)
                         message.react("✅")
                         if (quizGame.hasNext()) {
+                            delay(2500)
                             message.channel.sendMessage(quizGame.next())
                         } else {
                             activeGames.remove(message.channelId)
@@ -81,6 +85,7 @@ fun main() {
                         kahootGame.incScore(message.author)
                         message.react("✅")
                         if (kahootGame.hasNext()) {
+                            delay(2500)
                             val question = kahootGame.next()
                             val send = StringBuilder(question.question)
                             for (i in 0 until question.answerCount)
