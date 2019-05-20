@@ -96,9 +96,8 @@ fun main() {
                             val sortedScores = kahootGame.scores.toSortedMap(compareByDescending{ kahootGame.scores[it] })
                             message.channel.sendMessage("") {
                                 title = "Game Results"
-                                for (scores in sortedScores.entries.withIndex()) {
+                                for (scores in sortedScores.entries.withIndex())
                                     field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
-                                }
                             }
                         }
                     }
