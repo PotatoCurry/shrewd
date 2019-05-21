@@ -20,7 +20,7 @@ fun main() {
         commands(">") {
             command("quizlet") {
                 val quizletPath = URI(words[1]).path.split("/")
-                val setID = quizletPath.first{ it.isNotEmpty() }
+                val setID = quizletPath.first(String::isNotEmpty)
                 val quizGame = QuizletGame(author, setID)
                 activeGames[channelId] = quizGame
                 reply {
