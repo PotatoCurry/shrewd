@@ -18,6 +18,15 @@ fun main() {
 
     bot(System.getenv("shrewddiscordtoken")) {
         commands(">") {
+            command("help") {
+                reply(
+                    """
+                    >quizlet [setURL] - Start a Quizlet trivia game
+                    >kahoot [quizURL] - Start a Kahoot trivia game
+                    >abort - Stop the current game
+                    """.trimIndent()
+                )
+            }
             command("quizlet") {
                 val quizletPath = URI(words[1]).path.split("/")
                 val setID = quizletPath.first(String::isNotEmpty)
