@@ -5,7 +5,6 @@ import com.jessecorbett.diskord.util.isFromBot
 import com.jessecorbett.diskord.util.mention
 import com.jessecorbett.diskord.util.sendMessage
 import com.jessecorbett.diskord.util.words
-import com.sun.tools.javac.code.TypeAnnotationPosition.field
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kashoot.api.Question
 import io.github.potatocurry.kashoot.api.Quiz
@@ -13,6 +12,7 @@ import io.github.potatocurry.kwizlet.api.Kwizlet
 import io.github.potatocurry.kwizlet.api.Set
 import kotlinx.coroutines.delay
 import java.net.URI
+import java.net.URL
 
 val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
 val kashoot = Kashoot()
@@ -25,7 +25,7 @@ fun main() {
             command("help") {
                 reply(
                     """
-                    >quizlet [setURL] - Start a Quizlet trivia game
+                    >quizlet [setURL/query] - Start a Quizlet trivia game
                     >kahoot [quizURL] - Start a Kahoot trivia game
                     >abort - Stop the current game
                     """.trimIndent()
@@ -33,9 +33,9 @@ fun main() {
             }
             command("quizlet") {
                 val setID = if (words[1].contains("http"))
-                    kwizlet.parseURL(words[1])
+                    kwizlet.parseURL(URL(words[1]))
                 else
-                    kwizlet.search(words.drop(1).joinToString(" "))
+                    kwizlet.search(words.drop(1).joinToString(" ")).searchSets[0].id.toString()
                 val quizGame = QuizletGame(author, setID)
                 activeGames[channelId] = quizGame
                 reply {
