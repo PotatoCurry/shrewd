@@ -1,5 +1,6 @@
 import com.jessecorbett.diskord.api.model.User
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
+import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
 import com.jessecorbett.diskord.util.isFromBot
 import com.jessecorbett.diskord.util.mention
@@ -45,7 +46,7 @@ fun main() {
                     field("Total Terms", quizGame.set.termCount.toString(), false)
                 }
                 delay(2500)
-                reply(quizGame.next())
+                sendQuizletQuestion(channel, quizGame)
             }
             command("kahoot") {
                 val kahootPath = URI(words[1]).path.split("/")
@@ -125,6 +126,17 @@ fun main() {
             }
         }
     }.block()
+}
+
+suspend fun sendQuizletQuestion(channel: ChannelClient, quizGame: QuizletGame) {
+    val definition = quizGame.next()
+    val message = channel.sendMessage("") {
+        title = quizGame.set.title
+        field("Question", definition, false)
+    }
+    delay(7500)
+    if (quizGame.check(definition))
+        message.embeds[0]
 }
 
 abstract class Game(val creator: User) {
