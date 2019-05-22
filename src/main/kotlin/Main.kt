@@ -5,6 +5,7 @@ import com.jessecorbett.diskord.util.isFromBot
 import com.jessecorbett.diskord.util.mention
 import com.jessecorbett.diskord.util.sendMessage
 import com.jessecorbett.diskord.util.words
+import com.sun.tools.javac.code.TypeAnnotationPosition.field
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kashoot.api.Question
 import io.github.potatocurry.kashoot.api.Quiz
@@ -12,6 +13,9 @@ import io.github.potatocurry.kwizlet.api.Kwizlet
 import io.github.potatocurry.kwizlet.api.Set
 import kotlinx.coroutines.delay
 import java.net.URI
+
+val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
+val kashoot = Kashoot()
 
 fun main() {
     val activeGames = mutableMapOf<String, Game>()
@@ -28,8 +32,10 @@ fun main() {
                 )
             }
             command("quizlet") {
-                val quizletPath = URI(words[1]).path.split("/")
-                val setID = quizletPath.first(String::isNotEmpty)
+                val setID = if (words[1].contains("http"))
+                    kwizlet.parseURL(words[1])
+                else
+                    kwizlet.search(words.drop(1).joinToString(" "))
                 val quizGame = QuizletGame(author, setID)
                 activeGames[channelId] = quizGame
                 reply {
@@ -43,7 +49,7 @@ fun main() {
             }
             command("kahoot") {
                 val kahootPath = URI(words[1]).path.split("/")
-                val quizID = kahootPath.last{ it.isNotEmpty() }
+                val quizID = kahootPath.last(String::isNotEmpty)
                 val kahootGame = KahootGame(author, quizID)
                 activeGames[channelId] = kahootGame
                 reply {
@@ -144,7 +150,6 @@ class QuizletGame(creator: User, setID: String): Game(creator) {
     private lateinit var currentDefinition: String
 
     init {
-        val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
         set = kwizlet.getSet(setID)
         termMap = set.termMap.toSortedMap(String.CASE_INSENSITIVE_ORDER)
         shuffledDefinitions = termMap.values.shuffled().iterator()
@@ -170,7 +175,6 @@ class KahootGame(creator: User, quizID: String): Game(creator) {
     private lateinit var currentQuestion: Question
 
     init {
-        val kashoot = Kashoot()
         quiz = kashoot.getQuiz(quizID)
         questions = quiz.questions.shuffled().iterator()
     }
