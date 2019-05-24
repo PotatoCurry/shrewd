@@ -6,14 +6,6 @@ import io.github.potatocurry.kwizlet.api.Set
 abstract class Game(val creator: User) {
     val scores = mutableMapOf<User, Int>()
 
-    abstract fun hasNext(): Boolean
-
-    abstract fun peek(): Any
-
-    abstract fun next(): Any
-
-    abstract fun check(answer: String): Boolean
-
     fun incScore(user: User) {
         if (scores[user] == null)
             scores[user] = 0
@@ -23,32 +15,28 @@ abstract class Game(val creator: User) {
 
 class QuizletGame(creator: User, setID: String): Game(creator) {
     val set: Set // TODO: Rename to quiz and put in Game superclass?
-    private val termMap: Map<String, String>
-    private val shuffledDefinitions: Iterator<String>
-    private val shuffledTerms: Iterator<Pair<String, String>>
+    private val terms: Iterator<Pair<String, String>>
     private lateinit var currentTerm: Pair<String, String>
 
     init {
         set = kwizlet.getSet(setID)
-        termMap = set.termMap.toSortedMap(String.CASE_INSENSITIVE_ORDER)
-        shuffledDefinitions = termMap.values.shuffled().iterator()
-        shuffledTerms = set.termPairs.shuffled().iterator()
+        terms = set.termPairs.shuffled().iterator()
     }
 
-    override fun hasNext(): Boolean {
-        return shuffledTerms.hasNext()
+    fun hasNext(): Boolean {
+        return terms.hasNext()
     }
 
-    override fun peek(): Pair<String, String> {
+    fun peek(): Pair<String, String> {
         return currentTerm
     }
 
-    override fun next(): Pair<String, String> {
-        currentTerm = shuffledTerms.next()
+    fun next(): Pair<String, String> {
+        currentTerm = terms.next()
         return currentTerm
     }
 
-    override fun check(answer: String): Boolean {
+    fun check(answer: String): Boolean {
         return answer.equals(currentTerm.first, true)
     }
 }
@@ -63,20 +51,20 @@ class KahootGame(creator: User, quizID: String): Game(creator) {
         questions = quiz.questions.shuffled().iterator()
     }
 
-    override fun hasNext(): Boolean {
+    fun hasNext(): Boolean {
         return questions.hasNext()
     }
 
-    override fun peek(): Question {
+    fun peek(): Question {
         return currentQuestion
     }
 
-    override fun next(): Question {
+    fun next(): Question {
         currentQuestion = questions.next()
         return currentQuestion
     }
 
-    override fun check(answer: String): Boolean {
+    fun check(answer: String): Boolean {
         val charAnswer = answer.toUpperCase().toCharArray().single()
         if (charAnswer.isLetter() && charAnswer.toInt() - 65 < currentQuestion.answerCount) {
             return currentQuestion.correctAnswers.contains(currentQuestion.choices[charAnswer.toInt() - 65].answer)
