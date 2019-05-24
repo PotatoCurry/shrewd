@@ -64,7 +64,7 @@ fun main() {
                 reply(send.toString())
             }
             command("abort") {
-                val game = activeGames.remove(channelId)
+                val game = activeGames[channelId]
                 when {
                     game == null -> reply("No game running in this channel")
                     author != game.creator -> reply("Only the game creator can abort the game")
