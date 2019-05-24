@@ -8,6 +8,8 @@ abstract class Game(val creator: User) {
 
     abstract fun hasNext(): Boolean
 
+    abstract fun peek(): Any
+
     abstract fun next(): Any
 
     abstract fun check(answer: String): Boolean
@@ -23,25 +25,31 @@ class QuizletGame(creator: User, setID: String): Game(creator) {
     val set: Set // TODO: Rename to quiz and put in Game superclass?
     private val termMap: Map<String, String>
     private val shuffledDefinitions: Iterator<String>
-    private lateinit var currentDefinition: String
+    private val shuffledTerms: Iterator<Pair<String, String>>
+    private lateinit var currentTerm: Pair<String, String>
 
     init {
         set = kwizlet.getSet(setID)
         termMap = set.termMap.toSortedMap(String.CASE_INSENSITIVE_ORDER)
         shuffledDefinitions = termMap.values.shuffled().iterator()
+        shuffledTerms = set.termPairs.shuffled().iterator()
     }
 
     override fun hasNext(): Boolean {
-        return shuffledDefinitions.hasNext()
+        return shuffledTerms.hasNext()
     }
 
-    override fun next(): String {
-        currentDefinition = shuffledDefinitions.next()
-        return currentDefinition
+    override fun peek(): Pair<String, String> {
+        return currentTerm
+    }
+
+    override fun next(): Pair<String, String> {
+        currentTerm = shuffledTerms.next()
+        return currentTerm
     }
 
     override fun check(answer: String): Boolean {
-        return termMap[answer] == currentDefinition
+        return answer.equals(currentTerm.first, true)
     }
 }
 
@@ -57,6 +65,10 @@ class KahootGame(creator: User, quizID: String): Game(creator) {
 
     override fun hasNext(): Boolean {
         return questions.hasNext()
+    }
+
+    override fun peek(): Question {
+        return currentQuestion
     }
 
     override fun next(): Question {

@@ -1,4 +1,3 @@
-import com.jessecorbett.diskord.api.model.User
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
@@ -7,10 +6,7 @@ import com.jessecorbett.diskord.util.mention
 import com.jessecorbett.diskord.util.sendMessage
 import com.jessecorbett.diskord.util.words
 import io.github.potatocurry.kashoot.api.Kashoot
-import io.github.potatocurry.kashoot.api.Question
-import io.github.potatocurry.kashoot.api.Quiz
 import io.github.potatocurry.kwizlet.api.Kwizlet
-import io.github.potatocurry.kwizlet.api.Set
 import kotlinx.coroutines.delay
 import java.net.URI
 import java.net.URL
@@ -130,15 +126,15 @@ fun main() {
 }
 
 suspend fun sendQuizletQuestion(channel: ChannelClient, quizGame: QuizletGame) {
-    val definition = quizGame.next()
+    val termPair = quizGame.next()
     channel.sendMessage("") {
-        field("Question", definition, false)
+        field("Question", termPair.second, false)
     }
     delay(5000)
-    if (quizGame.check(definition))
+    if (termPair == quizGame.peek())
         channel.sendMessage("") {
-            field("Question", definition, false)
-            field("Hint", generateHint(definition), false)
+            field("Question", termPair.second, false)
+            field("Hint", generateHint(termPair.first), false)
         }
 }
 
@@ -146,6 +142,6 @@ fun generateHint(answer: String): String {
     val charArray = answer.toCharArray()
     val stringBuilder = StringBuilder()
     for (char in charArray)
-        stringBuilder.append(if (Random.nextInt(5) > 2) '_' else char)
+        stringBuilder.append(if (Random.nextInt(4) > 1) "\\_" else char)
     return stringBuilder.toString()
 }
