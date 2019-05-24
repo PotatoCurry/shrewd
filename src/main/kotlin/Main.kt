@@ -63,6 +63,15 @@ fun main() {
                     send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
                 reply(send.toString())
             }
+            command("skip") {
+                val game = activeGames[channelId]
+                when {
+                    game == null -> reply("No game running in this channel")
+                    game !is QuizletGame -> reply("Kahoot questions cannot be skipped")
+                    author != game.creator -> reply("Only the game creator can skip a question")
+                    else -> reply("Skipped question - ${game.peek().first} was the correct answer")
+                }
+            }
             command("abort") {
                 val game = activeGames[channelId]
                 when {
@@ -71,7 +80,10 @@ fun main() {
                     else -> {
                         activeGames.remove(channelId, game)
                         val winner = game.scores.maxBy{ it.value }?.key
-                        reply("Aborted game - ${winner?.mention} had the highest score with ${game.scores[winner]} points")
+                        if (winner == null)
+                            reply("Aborted game - Nobody had any points")
+                        else
+                            reply("Aborted game - ${winner.mention} had the highest score with ${game.scores[winner]} points")
                     }
                 }
             }
