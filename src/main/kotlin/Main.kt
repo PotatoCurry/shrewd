@@ -69,7 +69,11 @@ fun main() {
                     game == null -> reply("No game running in this channel")
                     game !is QuizletGame -> reply("Kahoot questions cannot be skipped")
                     author != game.creator -> reply("Only the game creator can skip a question")
-                    else -> reply("Skipped question - ${game.peek().first} was the correct answer")
+                    else -> {
+                        reply("Skipped question - ${game.peek().first} was the correct answer")
+                        delay(2500)
+                        sendQuizletQuestion(channel, game)
+                    }
                 }
             }
             command("abort") {
