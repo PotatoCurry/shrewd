@@ -2,6 +2,7 @@ import com.jessecorbett.diskord.api.model.User
 import io.github.potatocurry.kashoot.api.Question
 import io.github.potatocurry.kashoot.api.Quiz
 import io.github.potatocurry.kwizlet.api.Set
+import me.xdrop.fuzzywuzzy.FuzzySearch
 
 abstract class Game(val creator: User) {
     val scores = mutableMapOf<User, Int>()
@@ -37,7 +38,7 @@ class QuizletGame(creator: User, setID: String): Game(creator) {
     }
 
     fun check(answer: String): Boolean {
-        return answer.equals(currentTerm.first, true)
+        return FuzzySearch.ratio(answer, currentTerm.first) >= 80
     }
 }
 
