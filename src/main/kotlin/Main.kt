@@ -146,7 +146,7 @@ suspend fun sendQuizletQuestion(channel: ChannelClient, quizGame: QuizletGame) {
     channel.sendMessage("") {
         field("Question", termPair.second, false)
     }
-    delay(5000)
+    delay(10000)
     if (termPair == quizGame.peek())
         channel.sendMessage("") {
             field("Question", termPair.second, false)
