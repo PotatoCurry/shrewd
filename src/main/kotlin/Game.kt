@@ -15,12 +15,11 @@ abstract class Game(val creator: User) {
 }
 
 class QuizletGame(creator: User, setID: String): Game(creator) {
-    val set: Set // TODO: Rename to quiz and put in Game superclass?
+    val set: Set = kwizlet.getSet(setID)
     private val terms: Iterator<Pair<String, String>>
     private lateinit var currentTerm: Pair<String, String>
 
     init {
-        set = kwizlet.getSet(setID)
         terms = set.termPairs.shuffled().iterator()
     }
 
@@ -43,12 +42,11 @@ class QuizletGame(creator: User, setID: String): Game(creator) {
 }
 
 class KahootGame(creator: User, quizID: String): Game(creator) {
-    val quiz: Quiz
+    val quiz: Quiz = kashoot.getQuiz(quizID)
     private val questions: Iterator<Question>
     private lateinit var currentQuestion: Question
 
     init {
-        quiz = kashoot.getQuiz(quizID)
         questions = quiz.questions.shuffled().iterator()
     }
 
