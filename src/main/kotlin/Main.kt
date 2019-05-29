@@ -10,7 +10,6 @@ import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
 import java.net.URI
 import java.net.URL
-import kotlin.random.Random
 
 val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
 val kashoot = Kashoot()
@@ -157,7 +156,7 @@ suspend fun sendQuizletQuestion(channel: ChannelClient, quizGame: QuizletGame) {
 fun generateHint(answer: String): String {
     val charArray = answer.toCharArray()
     val stringBuilder = StringBuilder()
-    for (char in charArray)
-        stringBuilder.append(if (Random.nextInt(4) > 1) "\\_" else char)
+    for (char in charArray.withIndex())
+        stringBuilder.append(if (char.index % 3 == 0) char.value else "\\_")
     return stringBuilder.toString()
 }
