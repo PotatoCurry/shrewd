@@ -37,7 +37,7 @@ class QuizletGame(creator: User, setID: String): Game(creator) {
     }
 
     fun check(answer: String): Boolean {
-        return FuzzySearch.ratio(answer, currentTerm.first) >= 80
+        return FuzzySearch.ratio(answer.toLowerCase(), currentTerm.first.toLowerCase()) >= 75
     }
 }
 
