@@ -157,6 +157,6 @@ fun generateHint(answer: String): String {
     val charArray = answer.toCharArray()
     val stringBuilder = StringBuilder()
     for (char in charArray.withIndex())
-        stringBuilder.append(if (char.index % 3 == 0) char.value else "\\_")
+        stringBuilder.append(" ", if (char.index % 3 == 0) char.value else "\\_")
     return stringBuilder.toString()
 }
