@@ -155,8 +155,8 @@ suspend fun sendQuizletQuestion(channel: ChannelClient, quizGame: QuizletGame) {
 
 fun generateHint(answer: String): String {
     val charArray = answer.toCharArray()
-    val stringBuilder = StringBuilder()
+    val hint = StringBuilder()
     for (char in charArray.withIndex())
-        stringBuilder.append(" ", if (char.index % 3 == 0) char.value else "\\_")
-    return stringBuilder.toString()
+        hint.append(" ", if (char.index % 3 == 0) char.value else "\\_")
+    return hint.toString()
 }
