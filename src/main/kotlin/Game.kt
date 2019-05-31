@@ -1,6 +1,7 @@
 import com.jessecorbett.diskord.api.model.User
-import io.github.potatocurry.kashoot.api.Question
+import io.github.potatocurry.kashoot.api.Question as KahootQuestion
 import io.github.potatocurry.kashoot.api.Quiz
+import io.github.potatocurry.kwizlet.api.Question as QuizletQuestion
 import io.github.potatocurry.kwizlet.api.Set
 import me.xdrop.fuzzywuzzy.FuzzySearch
 
@@ -16,35 +17,35 @@ abstract class Game(val creator: User) {
 
 class QuizletGame(creator: User, setID: String): Game(creator) {
     val set: Set = kwizlet.getSet(setID)
-    private val terms: Iterator<Pair<String, String>>
-    private lateinit var currentTerm: Pair<String, String>
+    private val questions: Iterator<QuizletQuestion>
+    private lateinit var currentQuestion: QuizletQuestion
 
     init {
-        terms = set.termPairs.shuffled().iterator()
+        questions = set.questions.shuffled().iterator()
     }
 
     fun hasNext(): Boolean {
-        return terms.hasNext()
+        return questions.hasNext()
     }
 
-    fun peek(): Pair<String, String> {
-        return currentTerm
+    fun peek(): QuizletQuestion {
+        return currentQuestion
     }
 
-    fun next(): Pair<String, String> {
-        currentTerm = terms.next()
-        return currentTerm
+    fun next(): QuizletQuestion {
+        currentQuestion = questions.next()
+        return currentQuestion
     }
 
     fun check(answer: String): Boolean {
-        return FuzzySearch.ratio(answer.toLowerCase(), currentTerm.first.toLowerCase()) >= 75
+        return FuzzySearch.ratio(answer.toLowerCase(), currentQuestion.term.toLowerCase()) >= 75
     }
 }
 
 class KahootGame(creator: User, quizID: String): Game(creator) {
     val quiz: Quiz = kashoot.getQuiz(quizID)
-    private val questions: Iterator<Question>
-    private lateinit var currentQuestion: Question
+    private val questions: Iterator<KahootQuestion>
+    private lateinit var currentQuestion: KahootQuestion
 
     init {
         questions = quiz.questions.shuffled().iterator()
@@ -54,11 +55,11 @@ class KahootGame(creator: User, quizID: String): Game(creator) {
         return questions.hasNext()
     }
 
-    fun peek(): Question {
+    fun peek(): KahootQuestion {
         return currentQuestion
     }
 
-    fun next(): Question {
+    fun next(): KahootQuestion {
         currentQuestion = questions.next()
         return currentQuestion
     }
