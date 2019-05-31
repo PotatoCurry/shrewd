@@ -184,9 +184,9 @@ fun generateHint(answer: String): String {
     val charArray = answer.toCharArray()
     val hint = StringBuilder()
     for (char in charArray.withIndex())
-        hint.append(
+        hint.append(" ",
             when {
-                char.index % 3 == 0 -> char.value
+                (Math.random()*127).toInt() % 3 == 0 -> char.value
                 char.value == ' ' -> ' '
                 else -> "\\_"
             }
