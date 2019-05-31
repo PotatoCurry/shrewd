@@ -160,6 +160,12 @@ fun generateHint(answer: String): String {
     val charArray = answer.toCharArray()
     val hint = StringBuilder()
     for (char in charArray.withIndex())
-        hint.append(if (char.index % 3 == 0 || char.value == ' ') char.value else "\\_")
+        hint.append(
+            when {
+                char.index % 3 == 0 -> char.value
+                char.value == ' ' -> ' '
+                else -> "\\_"
+            }
+        )
     return hint.toString()
 }
