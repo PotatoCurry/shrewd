@@ -12,19 +12,31 @@ import kotlinx.coroutines.delay
 import java.net.URL
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlin.system.exitProcess
 
 val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
 val kashoot = Kashoot()
 val activeGames = mutableMapOf<String, Game>()
 
 fun main() {
-    val token = System.getenv("shrewddiscordtoken")
+    val env = System.getenv("SHREWD_ENV")
+    if (env == null) {
+        System.err.println("Error - SHREWD_ENV is null")
+        exitProcess(1)
+    }
+    val envName = "SHREWD_${env}_TOKEN"
+    val token = System.getenv(envName)
+    if (token == null) {
+        System.err.println("Error - $envName is null")
+        exitProcess(1)
+    }
+
     bot(token) {
         started {
             val dm = clientStore.discord.createDM(CreateDM("245007207102545921"))
             ChannelClient(token, dm.id).sendMessage("") {
                 description = "Bot Started"
-                field("Environment", "Production", true) // TODO: Add DEV/PROD switches
+                field("Environment", if (env == "PROD") "Production" else "Development", true) // TODO: Add DEV/PROD switches
                 timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
             }
         }
