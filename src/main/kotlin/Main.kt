@@ -69,7 +69,7 @@ fun main() {
                     game !is QuizletGame -> reply("Kahoot questions cannot be skipped")
                     author != game.creator -> reply("Only the game creator can skip a question")
                     else -> {
-                        reply("Skipped question - ${game.peek().first} was the correct answer")
+                        reply("Skipped question - ${game.peek().term} was the correct answer")
                         delay(2500)
                         sendQuizletQuestion(channel, game)
                     }
@@ -141,15 +141,19 @@ fun main() {
 }
 
 suspend fun sendQuizletQuestion(channel: ChannelClient, quizGame: QuizletGame) {
-    val termPair = quizGame.next()
+    val question = quizGame.next()
     channel.sendMessage("") {
-        field("Question", termPair.second, false)
+        field("Question", question.definition, false)
+        if (question.imageURL != null)
+            this.image(question.imageURL!!)
     }
     delay(10000)
-    if (termPair == quizGame.peek())
+    if (question == quizGame.peek())
         channel.sendMessage("") {
-            field("Question", termPair.second, false)
-            field("Hint", generateHint(termPair.first), false)
+            field("Question", question.definition, false)
+            if (question.imageURL != null)
+                this.image(question.imageURL!!)
+            field("Hint", generateHint(question.term), false)
         }
 }
 
