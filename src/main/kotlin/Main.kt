@@ -8,7 +8,6 @@ import com.jessecorbett.diskord.util.words
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
-import java.net.URI
 import java.net.URL
 
 val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
@@ -44,7 +43,7 @@ fun main() {
                 sendQuizletQuestion(channel, quizGame)
             }
             command("kahoot") {
-                val kahootPath = URI(words[1]).path.split("/")
+                val kahootPath = URL(words[1]).path.split("/")
                 val quizID = kahootPath.last(String::isNotEmpty)
                 val kahootGame = KahootGame(author, quizID)
                 activeGames[channelId] = kahootGame
