@@ -1,3 +1,4 @@
+import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
@@ -9,13 +10,25 @@ import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
 import java.net.URL
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
 val kashoot = Kashoot()
 val activeGames = mutableMapOf<String, Game>()
 
 fun main() {
-    bot(System.getenv("shrewddiscordtoken")) {
+    val token = System.getenv("shrewddiscordtoken")
+    bot(token) {
+        started {
+            val dm = clientStore.discord.createDM(CreateDM("245007207102545921"))
+            ChannelClient(token, dm.id).sendMessage("") {
+                description = "Bot Started"
+                field("Environment", "Production", true) // TODO: Add DEV/PROD switches
+                timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
+            }
+        }
+
         commands(">") {
             command("help") {
                 reply(
