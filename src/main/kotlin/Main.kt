@@ -13,10 +13,9 @@ import java.net.URL
 
 val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
 val kashoot = Kashoot()
+val activeGames = mutableMapOf<String, Game>()
 
 fun main() {
-    val activeGames = mutableMapOf<String, Game>()
-
     bot(System.getenv("shrewddiscordtoken")) {
         commands(">") {
             command("help") {
@@ -148,7 +147,7 @@ suspend fun sendQuizletQuestion(channel: ChannelClient, quizGame: QuizletGame) {
             this.image(question.imageURL!!)
     }
     delay(10000)
-    if (question == quizGame.peek())
+    if (question == quizGame.peek() && activeGames.containsKey(channel.channelId))
         channel.sendMessage("") {
             field("Question", question.definition, false)
             if (question.imageURL != null)
