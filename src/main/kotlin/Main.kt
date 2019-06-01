@@ -9,6 +9,8 @@ import com.jessecorbett.diskord.util.words
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
+//import net.jeremybrooks.knicker.WordApi
+//import net.jeremybrooks.knicker.WordsApi
 import java.net.URL
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -120,6 +122,17 @@ fun main() {
                     }
                 }
             }
+//            command("word") {
+//                System.setProperty("WORDNIK_API_KEY", System.getenv("SHREWD_WORDNIK_KEY"))
+//                val word = words[1]
+//                reply {
+//                    title = word
+//                    description = WordApi.definitions(word)[0].text
+//                    for (example in WordApi.examples(word).examples)
+//                        field(example.title, example.text, false)
+//                    timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
+//                }
+//            }
         }
 
         messageCreated { message ->
