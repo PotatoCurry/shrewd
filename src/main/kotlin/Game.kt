@@ -38,6 +38,8 @@ class QuizletGame(creator: User, setID: String): Game(creator) {
     }
 
     fun check(answer: String): Boolean {
+        if (!::currentQuestion.isInitialized)
+            return false
         return FuzzySearch.ratio(answer.toLowerCase(), currentQuestion.term.toLowerCase()) >= 75
     }
 }
@@ -65,6 +67,8 @@ class KahootGame(creator: User, quizID: String): Game(creator) {
     }
 
     fun check(answer: String): Boolean {
+        if (!::currentQuestion.isInitialized)
+            return false
         val charAnswer = answer.toUpperCase().toCharArray().single()
         if (charAnswer.isLetter() && charAnswer.toInt() - 65 < currentQuestion.answerCount) {
             return currentQuestion.correctAnswers.contains(currentQuestion.choices[charAnswer.toInt() - 65].answer)
