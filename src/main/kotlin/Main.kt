@@ -53,6 +53,7 @@ fun main() {
                     """
                     >quizlet [setURL/query] - Start a Quizlet trivia game
                     >kahoot [quizURL] - Start a Kahoot trivia game
+                    >skip - Skip the current question
                     >abort - Stop the current game
                     """.trimIndent()
                 )
