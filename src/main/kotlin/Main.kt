@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.system.exitProcess
 
-val kwizlet = Kwizlet(System.getenv("QuizletClientID"))
+val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
 val activeGames = mutableMapOf<String, Game>()
 
@@ -184,7 +184,6 @@ fun generateHint(answer: String): String {
     val charArray = answer.toCharArray()
     val hint = StringBuilder()
     for (char in charArray.withIndex())
-  
       hint.append(" ", if ((Math.random()*127).toInt() % 3 == 0 || char.value == ' ') char.value else "\\_")
     return hint.toString()
 }
