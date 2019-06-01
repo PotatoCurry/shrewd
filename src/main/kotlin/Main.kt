@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import java.net.URL
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlin.concurrent.fixedRateTimer
 import kotlin.system.exitProcess
 
 val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
@@ -36,9 +37,14 @@ fun main() {
             val dm = clientStore.discord.createDM(CreateDM("245007207102545921"))
             ChannelClient(token, dm.id).sendMessage("") {
                 description = "Bot Started"
-                field("Environment", if (env == "PROD") "Production" else "Development", true) // TODO: Add DEV/PROD switches
+                field("Environment", if (env == "PROD") "Production" else "Development", true)
+//                field("Guilds", clientStore.guilds, true)
                 timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
             }
+
+//            fixedRateTimer("Rich Presence", true, 0L, 60 * 1000) {
+//
+//            }
         }
 
         commands(">") {
