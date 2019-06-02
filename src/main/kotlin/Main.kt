@@ -9,6 +9,7 @@ import com.jessecorbett.diskord.util.words
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
+//import org.merriam_api.service.MerriamService
 //import net.jeremybrooks.knicker.WordApi
 //import net.jeremybrooks.knicker.WordsApi
 import java.net.URL
@@ -122,7 +123,14 @@ fun main() {
                     }
                 }
             }
-//            command("word") {
+            command("word") {
+//                val merriamDictionary = MerriamService("----------------------------")
+//                val word = words[1]
+//                reply {
+//                    title = word
+//                    description = merriamDictionary.getDefinition(word, 2)[0].transcription
+//                }
+
 //                System.setProperty("WORDNIK_API_KEY", System.getenv("SHREWD_WORDNIK_KEY"))
 //                val word = words[1]
 //                reply {
@@ -132,7 +140,7 @@ fun main() {
 //                        field(example.title, example.text, false)
 //                    timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
 //                }
-//            }
+            }
         }
 
         messageCreated { message ->
