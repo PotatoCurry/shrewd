@@ -1,11 +1,16 @@
 import com.jessecorbett.diskord.api.model.User
+import com.jessecorbett.diskord.api.rest.client.ChannelClient
+import com.jessecorbett.diskord.dsl.field
+import com.jessecorbett.diskord.dsl.image
+import com.jessecorbett.diskord.util.sendMessage
 import io.github.potatocurry.kashoot.api.Question as KahootQuestion
 import io.github.potatocurry.kashoot.api.Quiz
 import io.github.potatocurry.kwizlet.api.Question as QuizletQuestion
 import io.github.potatocurry.kwizlet.api.Set
+import kotlinx.coroutines.delay
 import me.xdrop.fuzzywuzzy.FuzzySearch
 
-abstract class Game(val creator: User) {
+abstract class Game(val channel: ChannelClient, val creator: User) {
     val scores = mutableMapOf<User, Int>()
 
     fun incScore(user: User) {
@@ -15,13 +20,30 @@ abstract class Game(val creator: User) {
     }
 }
 
-class QuizletGame(creator: User, setID: String): Game(creator) {
+class QuizletGame(channel: ChannelClient, creator: User, setID: String): Game(channel, creator) {
     val set: Set = kwizlet.getSet(setID)
     private val questions: Iterator<QuizletQuestion>
     private lateinit var currentQuestion: QuizletQuestion
 
     init {
         questions = set.questions.shuffled().iterator()
+    }
+
+    suspend fun sendQuestion() {
+        val question = next()
+        channel.sendMessage("") {
+            field("Question", question.definition, false)
+            if (question.imageURL != null)
+                image(question.imageURL!!)
+        }
+        delay(10000)
+        if (question == peek() && games.containsKey(channel.channelId))
+            channel.sendMessage("") {
+                field("Question", question.definition, false)
+                if (question.imageURL != null)
+                    image(question.imageURL!!)
+                field("Hint", generateHint(question.term), false)
+            }
     }
 
     fun hasNext(): Boolean {
@@ -40,11 +62,19 @@ class QuizletGame(creator: User, setID: String): Game(creator) {
     fun check(answer: String): Boolean {
         if (!::currentQuestion.isInitialized)
             return false
-        return FuzzySearch.ratio(answer.toLowerCase(), currentQuestion.term.toLowerCase()) >= 75
+        return FuzzySearch.ratio(answer.toLowerCase(), currentQuestion.term.toLowerCase()) >= 80
+    }
+
+    private fun generateHint(answer: String): String {
+        val charArray = answer.toCharArray()
+        val hint = StringBuilder()
+        for (char in charArray.withIndex())
+            hint.append(" ", if ((Math.random()*127).toInt() % 3 == 0 || char.value == ' ') char.value else "\\_")
+        return hint.toString()
     }
 }
 
-class KahootGame(creator: User, quizID: String): Game(creator) {
+class KahootGame(channel: ChannelClient, creator: User, quizID: String): Game(channel, creator) {
     val quiz: Quiz = kashoot.getQuiz(quizID)
     private val questions: Iterator<KahootQuestion>
     private lateinit var currentQuestion: KahootQuestion
