@@ -9,6 +9,7 @@ import com.jessecorbett.diskord.util.words
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
+import kotlinx.io.IOException
 //import org.merriam_api.service.MerriamService
 //import net.jeremybrooks.knicker.WordApi
 //import net.jeremybrooks.knicker.WordsApi
@@ -53,12 +54,23 @@ fun main() {
             command("help") {
                 reply(
                     """
+                    >wolfram [query] - Query Wolfram Alpha for a simple answer
                     >quizlet [setURL/query] - Start a Quizlet trivia game
                     >kahoot [quizURL] - Start a Kahoot trivia game
                     >skip - Skip the current question
                     >abort - Stop the current game
                     """.trimIndent()
-                )
+                ) // TODO: Make embed for this
+            }
+            command("wolfram") {
+                val query = words.drop(1).joinToString("+")
+                val wolframID = System.getenv("SHREWD_WOLFRAM_ID")
+                val answer = try {
+                    URL("https://api.wolframalpha.com/v1/result?i=$query&appid=$wolframID").readText()
+                } catch (e: IOException) {
+                    "idk man"
+                }
+                reply("${author.mention} $answer")
             }
             command("quizlet") {
                 val setID = if (words[1].contains("http"))
