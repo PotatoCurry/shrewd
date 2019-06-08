@@ -70,7 +70,7 @@ fun main() {
                 } catch (e: IOException) {
                     "idk man"
                 }
-                reply("${author.mention} $answer")
+                reply("$answer")
             }
             command("quizlet") {
                 val setID = if (words[1].contains("http"))
