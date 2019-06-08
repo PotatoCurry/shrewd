@@ -64,7 +64,7 @@ fun main() {
                 ) // TODO: Make embed for this
             }
             command("wolfram") {
-                val query = URLEncoder.encode(words.drop(1).joinToString(" "), Charsets.UTF_8)
+                val query = URLEncoder.encode(words.drop(1).joinToString(" "), "UTF-8")
                 val wolframID = System.getenv("SHREWD_WOLFRAM_ID")
                 val answer = try {
                     URL("https://api.wolframalpha.com/v1/result?i=$query&appid=$wolframID").readText()
