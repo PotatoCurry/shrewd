@@ -14,6 +14,7 @@ import kotlinx.io.IOException
 //import net.jeremybrooks.knicker.WordApi
 //import net.jeremybrooks.knicker.WordsApi
 import java.net.URL
+import java.net.URLEncoder
 import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.system.exitProcess
@@ -63,7 +64,7 @@ fun main() {
                 ) // TODO: Make embed for this
             }
             command("wolfram") {
-                val query = words.drop(1).joinToString("+")
+                val query = URLEncoder.encode(words.drop(1).joinToString(" "), Charsets.UTF_8)
                 val wolframID = System.getenv("SHREWD_WOLFRAM_ID")
                 val answer = try {
                     URL("https://api.wolframalpha.com/v1/result?i=$query&appid=$wolframID").readText()
