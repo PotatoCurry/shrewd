@@ -1,3 +1,5 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
@@ -23,7 +25,7 @@ val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
 val games = mutableMapOf<String, Game>()
 
-fun main() {
+suspend fun main() {
     val env = System.getenv("SHREWD_ENV")
     if (env == null) {
         System.err.println("Error - SHREWD_ENV is null")
@@ -200,5 +202,5 @@ fun main() {
                 }
             }
         }
-    }.block()
+    }
 }
