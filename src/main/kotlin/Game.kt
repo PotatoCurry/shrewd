@@ -1,9 +1,11 @@
 package io.github.potatocurry.shrewd
 
+import com.jessecorbett.diskord.api.model.Channel
 import com.jessecorbett.diskord.api.model.User
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.field
 import com.jessecorbett.diskord.dsl.image
+import com.jessecorbett.diskord.util.mention
 import com.jessecorbett.diskord.util.sendMessage
 import io.github.potatocurry.kashoot.api.Question as KahootQuestion
 import io.github.potatocurry.kashoot.api.Quiz
@@ -19,6 +21,16 @@ abstract class Game(val channel: ChannelClient, val creator: User) {
         if (scores[user] == null)
             scores[user] = 0
         scores[user] = scores[user]!! + 1
+    }
+
+    suspend fun abort(channel: ChannelClient) {
+        games.remove(channel.channelId)
+        val winner = scores.maxBy{ it.value }?.key
+        if (winner == null)
+            channel.sendMessage("Aborted game - nobody had any points")
+        else
+            channel.sendMessage("Aborted game - ${winner.mention} had the highest score with ${scores[winner]} points")
+        logger.trace("Game in channel ${channel.channelId} aborted")
     }
 }
 
