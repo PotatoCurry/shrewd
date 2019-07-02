@@ -1,4 +1,5 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE")
+package io.github.potatocurry.shrewd
 
 import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
@@ -12,6 +13,7 @@ import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
+import org.slf4j.LoggerFactory
 //import org.merriam_api.service.MerriamService
 //import net.jeremybrooks.knicker.WordApi
 //import net.jeremybrooks.knicker.WordsApi
@@ -21,6 +23,8 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.system.exitProcess
 
+val logger = LoggerFactory.getLogger("io.github.potatocurry.shrewd")
+
 val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
 val games = mutableMapOf<String, Game>()
@@ -28,15 +32,16 @@ val games = mutableMapOf<String, Game>()
 suspend fun main() {
     val env = System.getenv("SHREWD_ENV")
     if (env == null) {
-        System.err.println("Error - SHREWD_ENV is null")
+        logger.error("SHREWD_ENV is null")
         exitProcess(1)
     }
     val envName = "SHREWD_${env}_TOKEN"
     val token = System.getenv(envName)
     if (token == null) {
-        System.err.println("Error - $envName is null")
+        logger.error("$envName is null")
         exitProcess(1)
     }
+    logger.info("Obtained bot token")
 
     bot(token) {
         started {
