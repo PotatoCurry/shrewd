@@ -38,14 +38,18 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): Game(ch
             if (question.imageURL != null)
                 image(question.imageURL!!)
         }
+        logger.trace("Sending question \"{}\" in channel {}", question.definition, channel.channelId)
         delay(10000)
-        if (question == peek() && games.containsKey(channel.channelId))
+        if (question == peek() && games.containsKey(channel.channelId)) {
+            val hint = generateHint(question.term)
             channel.sendMessage("") {
                 field("Question", question.definition, false)
                 if (question.imageURL != null)
                     image(question.imageURL!!)
-                field("Hint", generateHint(question.term), false)
+                field("Hint", hint, false)
             }
+            logger.trace("Sending hint \"{}\" in channel {}", hint, channel.channelId)
+        }
     }
 
     fun hasNext(): Boolean {
@@ -64,14 +68,19 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): Game(ch
     fun check(answer: String): Boolean {
         if (!::currentQuestion.isInitialized)
             return false
-        return FuzzySearch.ratio(answer.toLowerCase(), currentQuestion.term.toLowerCase()) >= 80
+        val lowerAnswer = answer.toLowerCase()
+        val lowerTerm = currentQuestion.term.toLowerCase()
+        val ratio = FuzzySearch.ratio(lowerAnswer, lowerTerm)
+        val matches = ratio >= 80
+        logger.trace("Answer {} ${if (matches) "matches" else "does not match"} {} with a ratio of {}", lowerAnswer, lowerTerm, ratio)
+        return matches
     }
 
     private fun generateHint(answer: String): String {
         val charArray = answer.toCharArray()
         val hint = StringBuilder()
         for (char in charArray.withIndex())
-            hint.append(" ", if ((Math.random()*127).toInt() % 3 == 0 || char.value == ' ') char.value else "\\_")
+            hint.append(" ", if ((Math.random() * 127).toInt() % 3 == 0 || char.value == ' ') char.value else "\\_")
         return hint.toString()
     }
 }
@@ -106,6 +115,7 @@ class KahootGame(channel: ChannelClient, creator: User, quizID: String): Game(ch
             return currentQuestion.correctAnswers.contains(currentQuestion.choices[charAnswer.toInt() - 65].answer)
         }
         return false
+        // TODO: Add logging when converted to emoji reaction answers
     }
 
 // TODO: Revisit emoji kahoot reactions when Diskord adds rich reactions or use newReaction events
