@@ -20,6 +20,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
 //    implementation "net.jeremybrooks:knicker:2.4.1"
 //    implementation "com.github.PotatoCurry:MerriamWebsterJavaApi:888b9ce0da"
+    implementation "ch.qos.logback:logback-classic:1.2.3"
+    implementation 'io.sentry:sentry-logback:1.7.16'
 }
 
 compileKotlin {
