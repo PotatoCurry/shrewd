@@ -5,10 +5,7 @@ import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
-import com.jessecorbett.diskord.util.isFromBot
-import com.jessecorbett.diskord.util.mention
-import com.jessecorbett.diskord.util.sendMessage
-import com.jessecorbett.diskord.util.words
+import com.jessecorbett.diskord.util.*
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
@@ -24,7 +21,7 @@ import java.time.ZoneId
 import kotlin.system.exitProcess
 
 val logger = LoggerFactory.getLogger("io.github.potatocurry.shrewd")
-
+val admins = listOf("245007207102545921", "141314236998615040")
 val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
 val games = mutableMapOf<String, Game>()
@@ -71,6 +68,7 @@ suspend fun main() {
                     """.trimIndent()
                 ) // TODO: Make embed for this
             }
+
             command("wolfram") {
                 val query = URLEncoder.encode(words.drop(1).joinToString(" "), "UTF-8")
                 val wolframID = System.getenv("SHREWD_WOLFRAM_ID")
@@ -99,6 +97,7 @@ suspend fun main() {
                 }
                 reply(answer)
             }
+
             command("quizlet") {
                 val setID = if (words[1].contains("http"))
                     kwizlet.parseURL(URL(words[1]))
@@ -115,6 +114,7 @@ suspend fun main() {
                 delay(2500)
                 quizGame.sendQuestion()
             }
+
             command("kahoot") {
                 val kahootPath = URL(words[1]).path.split("/")
                 val quizID = kahootPath.last(String::isNotEmpty)
@@ -134,6 +134,7 @@ suspend fun main() {
                     send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
                 reply(send.toString())
             }
+
             command("skip") {
                 val game = games[channelId]
                 when {
@@ -147,21 +148,16 @@ suspend fun main() {
                     }
                 }
             }
+
             command("abort") {
                 val game = games[channelId]
                 when {
                     game == null -> reply("No game running in this channel")
                     author != game.creator -> reply("Only the game creator can abort the game")
-                    else -> {
-                        games.remove(channelId, game)
-                        val winner = game.scores.maxBy{ it.value }?.key
-                        if (winner == null)
-                            reply("Aborted game - Nobody had any points")
-                        else
-                            reply("Aborted game - ${winner.mention} had the highest score with ${game.scores[winner]} points")
-                    }
+                    else -> game.abort(channel)
                 }
             }
+
 //            command("word") {
 //                val merriamDictionary = MerriamService("----------------------------")
 //                val word = words[1]
@@ -180,6 +176,25 @@ suspend fun main() {
 //                    timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
 //                }
 //            }
+
+            command("shutdown") {
+                val userLog = "${author.username} ($authorId)"
+                if (admins.contains(authorId)) {
+                    react("\uD83D\uDE22")
+                    reply("Shutting down")
+                    for (gameEntry in games) {
+                        ChannelClient(token, gameEntry.key).sendMessage("Bot shutting down")
+                        gameEntry.value.abort(ChannelClient(token, gameEntry.key))
+                    }
+                    logger.info("Shutdown all active games")
+                    shutdown()
+                    logger.info("Bot shutdown by {}", userLog)
+                    exitProcess(0)
+                } else {
+                    react("\uD83D\uDE20")
+                    logger.trace("Shutdown request by {} denied", userLog)
+                }
+            }
         }
 
         messageCreated { message ->
