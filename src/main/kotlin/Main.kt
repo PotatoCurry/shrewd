@@ -70,7 +70,7 @@ suspend fun main() {
             }
 
             command("wolfram") {
-                val query = URLEncoder.encode(words.drop(1).joinToString(" "), "UTF-8")
+                val query = words.drop(1).joinToString(" ")
                 val wolframID = System.getenv("SHREWD_WOLFRAM_ID")
                 if (wolframID == null)
                     logger.error("SHREWD_WOLFRAM_ID is null")
