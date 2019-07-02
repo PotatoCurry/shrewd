@@ -21,7 +21,7 @@ import java.time.ZoneId
 import kotlin.system.exitProcess
 
 val logger = LoggerFactory.getLogger("io.github.potatocurry.shrewd")
-val admins = listOf("245007207102545921", "141314236998615040")
+val admins = listOf("245007207102545921", "141314236998615040", "318071655857651723")
 val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
 val games = mutableMapOf<String, Game>()
