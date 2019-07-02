@@ -187,7 +187,6 @@ suspend fun main() {
                         gameEntry.value.abort(ChannelClient(token, gameEntry.key))
                     }
                     logger.info("Shutdown all active games")
-                    shutdown()
                     logger.info("Bot shutdown by {}", userLog)
                     exitProcess(0)
                 } else {
