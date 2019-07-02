@@ -11,6 +11,11 @@
         </filter>
     </appender>
 
+    <!-- Not working yet: logs of all levels are still printed to the console -->
+    <logger name="com.jessecorbett" level="INFO" additivity="false">
+        <appender-ref ref="Console"/>
+    </logger>
+
     <root level="INFO">
         <appender-ref ref="Console"/>
         <appender-ref ref="Sentry"/>

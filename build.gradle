@@ -17,11 +17,13 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.2"
     implementation "com.github.PotatoCurry:Kwizlet:0.5.4"
     implementation "com.github.PotatoCurry:Kashoot:0.2.1"
+    implementation "com.github.jkcclemens:khttp:-SNAPSHOT"
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
 //    implementation "net.jeremybrooks:knicker:2.4.1"
 //    implementation "com.github.PotatoCurry:MerriamWebsterJavaApi:888b9ce0da"
+    implementation "org.slf4j:slf4j-api:1.7.26"
     implementation "ch.qos.logback:logback-classic:1.2.3"
-    implementation 'io.sentry:sentry-logback:1.7.16'
+    implementation "io.sentry:sentry-logback:1.7.16"
 }
 
 compileKotlin {

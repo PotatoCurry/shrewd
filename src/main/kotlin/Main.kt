@@ -52,6 +52,7 @@ suspend fun main() {
 //                field("Guilds", clientStore.guilds, true)
                 timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
             }
+            logger.info("Startup message sent")
 
 //            fixedRateTimer("Rich Presence", true, 0L, 60 * 1000) {
 //
@@ -73,9 +74,27 @@ suspend fun main() {
             command("wolfram") {
                 val query = URLEncoder.encode(words.drop(1).joinToString(" "), "UTF-8")
                 val wolframID = System.getenv("SHREWD_WOLFRAM_ID")
+                if (wolframID == null)
+                    logger.error("SHREWD_WOLFRAM_ID is null")
+                val params = mapOf("i" to query, "appid" to wolframID)
+                val response = khttp.get("https://api.wolframalpha.com/v1/result", params = params)
                 val answer = try {
-                    URL("https://api.wolframalpha.com/v1/result?i=$query&appid=$wolframID").readText()
+                    when (response.statusCode) {
+                        200 -> {
+                            logger.trace("WolframAlpha response to query \"{}\" was \"{}\"", query, response.text)
+                            response.text
+                        }
+                        501 -> {
+                            logger.trace("WolframAlpha had no response to \"{}\"", query)
+                            "idk man"
+                        }
+                        else -> {
+                            logger.error("Received unknown WolframAlpha response")
+                            "idk man"
+                        }
+                    }
                 } catch (e: IOException) {
+                    logger.error("Error requesting WolframAlpha content", e)
                     "idk man"
                 }
                 reply(answer)
@@ -107,6 +126,7 @@ suspend fun main() {
                     author = EmbedAuthor(kahootGame.quiz.creator)
                     field("Total Terms", kahootGame.quiz.questions.size.toString(), false)
                 }
+
                 delay(2500)
                 val question = kahootGame.next()
                 val send = StringBuilder(question.question)
