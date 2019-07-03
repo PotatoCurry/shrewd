@@ -1,6 +1,5 @@
 package io.github.potatocurry.shrewd
 
-import com.jessecorbett.diskord.api.model.Channel
 import com.jessecorbett.diskord.api.model.User
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.field
