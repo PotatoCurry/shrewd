@@ -10,12 +10,12 @@ import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
+import org.json.JSONObject
 import org.slf4j.LoggerFactory
 //import org.merriam_api.service.MerriamService
 //import net.jeremybrooks.knicker.WordApi
 //import net.jeremybrooks.knicker.WordsApi
 import java.net.URL
-import java.net.URLEncoder
 import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.system.exitProcess
@@ -74,7 +74,10 @@ suspend fun main() {
                 val wolframID = System.getenv("SHREWD_WOLFRAM_ID")
                 if (wolframID == null)
                     logger.error("SHREWD_WOLFRAM_ID is null")
-                val params = mapOf("i" to query, "appid" to wolframID)
+                val params = mapOf(
+                    "i" to query,
+                    "appid" to wolframID
+                )
                 val response = khttp.get("https://api.wolframalpha.com/v1/result", params = params)
                 val answer = try {
                     when (response.statusCode) {
@@ -96,6 +99,23 @@ suspend fun main() {
                     "idk man"
                 }
                 reply(answer)
+            }
+
+            //TODO: Wolfram request method
+
+            command("summary") {
+                val articleURL = words[1]
+                val smmry = getSMMRY(articleURL, 5)
+                val articleTitle = smmry.getString("sm_api_title")
+                val articleChars = smmry.getString("sm_api_character_count")
+                val articleReduction = smmry.getString("sm_api_content_reduced")
+                val articleSummary = smmry.getString("sm_api_content")
+                reply(articleSummary) {
+                    title = articleTitle
+                    url = articleURL
+                    field("Characters", articleChars, true)
+                    field("Reduction", articleReduction, true)
+                }
             }
 
             command("quizlet") {
@@ -242,4 +262,16 @@ suspend fun main() {
             }
         }
     }
+}
+
+fun getSMMRY(articleURL: String, sentenceCount: Int = 7, keywordCount: Int = 5): JSONObject { // TODO: Make object for this when ported to edukate
+    val smmryKey = System.getenv("SHREWD_SMMRY_KEY")
+    val params = mapOf(
+        "SM_API_KEY" to smmryKey,
+        "SM_LENGTH" to sentenceCount.toString(),
+        "SM_KEYWORD_COUNT" to keywordCount.toString(),
+        "SM_URL" to articleURL
+    )
+    val response = khttp.get("https://api.smmry.com", params = params)
+    return response.jsonObject
 }
