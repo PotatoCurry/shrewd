@@ -36,6 +36,6 @@ compileTestKotlin {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'MainKt'
+        attributes 'Main-Class': 'io.github.potatocurry.shrewd.MainKt'
     }
 }
