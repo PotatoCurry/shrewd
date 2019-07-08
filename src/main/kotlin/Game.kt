@@ -75,9 +75,7 @@ abstract class TriviaGame(channel: ChannelClient, creator: User): Game(channel, 
     val scores = mutableMapOf<User, Int>()
 
     fun incScore(user: User) {
-        if (scores[user] == null)
-            scores[user] = 0
-        scores[user] = scores[user]!! + 1
+        scores[user] = scores.getOrDefault(user, 0) + 1
     }
 
     override suspend fun abort() {
@@ -103,8 +101,9 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
         val question = next()
         channel.sendMessage("") {
             field("Question", question.definition, false)
-            if (question.imageURL != null)
-                image(question.imageURL!!)
+            val imageURL = question.imageURL
+            if (imageURL != null)
+                image(imageURL)
         }
         logger.trace("Sending question \"{}\" in channel {}", question.definition, channel.channelId)
         delay(10000)
@@ -112,8 +111,9 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
             val hint = generateHint(question.term)
             channel.sendMessage("") {
                 field("Question", question.definition, false)
-                if (question.imageURL != null)
-                    image(question.imageURL!!)
+                val imageURL = question.imageURL
+                if (imageURL != null)
+                    image(imageURL)
                 field("Hint", hint, false)
             }
             logger.trace("Sending hint \"{}\" in channel {}", hint, channel.channelId)
