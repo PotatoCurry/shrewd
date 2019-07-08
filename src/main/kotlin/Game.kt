@@ -1,11 +1,15 @@
 package io.github.potatocurry.shrewd
 
 import com.jessecorbett.diskord.api.model.User
+import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.field
 import com.jessecorbett.diskord.dsl.image
 import com.jessecorbett.diskord.util.mention
+import com.jessecorbett.diskord.util.pngAvatar
 import com.jessecorbett.diskord.util.sendMessage
+import humanize.Humanize.oxford
+import humanize.Humanize.times
 import io.github.potatocurry.kashoot.api.Question as KahootQuestion
 import io.github.potatocurry.kashoot.api.Quiz
 import io.github.potatocurry.kwizlet.api.Question as QuizletQuestion
@@ -14,6 +18,60 @@ import kotlinx.coroutines.delay
 import me.xdrop.fuzzywuzzy.FuzzySearch
 
 abstract class Game(val channel: ChannelClient, val creator: User) {
+    open suspend fun abort(){
+        games.remove(channel.channelId)
+        logger.trace("Game in channel {} aborted", channel.channelId)
+    }
+}
+
+class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
+    val intro: String
+    val initialDescription: String
+    val initialExits: List<Any>
+    private val locationPaths = mutableListOf<String>()
+    private val locationPath: String
+        get() = locationPaths.last()
+
+    init {
+        val response = khttp.post("https://api.noopschallenge.com/pathbot/start").jsonObject
+        intro = response.getString("message")
+        initialDescription = response.getString("description")
+        initialExits = response.getJSONArray("exits").toList()
+        locationPaths += response.getString("locationPath")
+    }
+
+    suspend fun sendCommand(direction: String) {
+        val response = khttp.post("https://api.noopschallenge.com$locationPath", json = mapOf("direction" to direction)).jsonObject
+        if (response.getString("status") == "finished") {
+            channel.sendMessage(response.getString("description"))
+            games.remove(channel.channelId)
+            logger.trace("Cave game ended in channel {}", channel.channelId)
+        } else {
+            if (response.has("description"))
+                channel.sendMessage("") {
+                    title = "Cave Exploration"
+                    description = response.getString("description")
+                    with (creator) {
+                        author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                    }
+                    field("Exits", oxford(response.getJSONArray("exits").toList()), true)
+                    val visitCount = locationPaths.count { it == locationPath }
+                    if (visitCount > 1)
+                        field("Warning", "You already visited this area ${times(visitCount - 1)} before.", true)
+                }
+            else
+                channel.sendMessage(response.getString("message"))
+            locationPaths += response.getString("locationPath")
+        }
+    }
+
+    override suspend fun abort() {
+        channel.sendMessage("Aborted game")
+        super.abort()
+    }
+}
+
+abstract class TriviaGame(channel: ChannelClient, creator: User): Game(channel, creator) {
     val scores = mutableMapOf<User, Int>()
 
     fun incScore(user: User) {
@@ -22,18 +80,17 @@ abstract class Game(val channel: ChannelClient, val creator: User) {
         scores[user] = scores[user]!! + 1
     }
 
-    suspend fun abort(channel: ChannelClient) {
-        games.remove(channel.channelId)
+    override suspend fun abort() {
         val winner = scores.maxBy{ it.value }?.key
         if (winner == null)
             channel.sendMessage("Aborted game - nobody had any points")
         else
             channel.sendMessage("Aborted game - ${winner.mention} had the highest score with ${scores[winner]} points")
-        logger.trace("Game in channel ${channel.channelId} aborted")
+        super.abort()
     }
 }
 
-class QuizletGame(channel: ChannelClient, creator: User, setID: String): Game(channel, creator) {
+class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaGame(channel, creator) {
     val set: Set = kwizlet.getSet(setID)
     private val questions: Iterator<QuizletQuestion>
     private lateinit var currentQuestion: QuizletQuestion
@@ -96,7 +153,7 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): Game(ch
     }
 }
 
-class KahootGame(channel: ChannelClient, creator: User, quizID: String): Game(channel, creator) {
+class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaGame(channel, creator) {
     val quiz: Quiz = kashoot.getQuiz(quizID)
     private val questions: Iterator<KahootQuestion>
     private lateinit var currentQuestion: KahootQuestion
