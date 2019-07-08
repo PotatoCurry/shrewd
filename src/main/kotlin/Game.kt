@@ -43,7 +43,14 @@ class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
     suspend fun sendCommand(direction: String) {
         val response = khttp.post("https://api.noopschallenge.com$locationPath", json = mapOf("direction" to direction)).jsonObject
         if (response.getString("status") == "finished") {
-            channel.sendMessage(response.getString("description"))
+            channel.sendMessage("") {
+                title = "Cave Exploration"
+                description = response.getString("description")
+                with (creator) {
+                    author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                }
+                field("Moves", locationPaths.size.toString(), true)
+            }
             games.remove(channel.channelId)
             logger.trace("Cave game ended in channel {}", channel.channelId)
         } else {
