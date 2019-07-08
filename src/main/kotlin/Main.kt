@@ -255,7 +255,6 @@ suspend fun main() {
                         ChannelClient(token, gameEntry.key).sendMessage("Bot shutting down")
                         gameEntry.value.abort()
                     }
-                    logger.info("Shutdown all active games")
                     logger.info("Bot shutdown by {}", userLog)
                     exitProcess(0)
                 } else {
@@ -267,14 +266,12 @@ suspend fun main() {
 
         messageCreated { message ->
             if (!message.isFromBot && games.containsKey(message.channelId)) {
-                when {
-                    games[message.channelId]!! is CaveGame -> {
-                        val game = games[message.channelId]!! as CaveGame
+                when (val game = games[message.channelId]) {
+                    is CaveGame -> {
                         if (game.creator == message.author && listOf("N", "S", "E", "W").contains(message.content))
                             game.sendCommand(message.content)
                     }
-                    games[message.channelId]!! is QuizletGame -> {
-                        val game = games[message.channelId]!! as QuizletGame
+                    is QuizletGame -> {
                         if (game.check(message.content)) {
                             game.incScore(message.author)
                             message.react("✅")
@@ -292,8 +289,7 @@ suspend fun main() {
                             }
                         }
                     }
-                    games[message.channelId]!! is KahootGame -> {
-                        val game = games[message.channelId]!! as KahootGame
+                    is KahootGame -> {
                         if (message.content.length == 1 && game.check(message.content)) {
                             game.incScore(message.author)
                             message.react("✅")
