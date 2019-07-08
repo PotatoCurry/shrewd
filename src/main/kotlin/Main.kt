@@ -6,11 +6,13 @@ import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
 import com.jessecorbett.diskord.util.*
+import humanize.Humanize
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
 import org.json.JSONObject
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 //import org.merriam_api.service.MerriamService
 //import net.jeremybrooks.knicker.WordApi
@@ -20,7 +22,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.system.exitProcess
 
-val logger = LoggerFactory.getLogger("io.github.potatocurry.shrewd")
+val logger: Logger = LoggerFactory.getLogger("io.github.potatocurry.shrewd")
 val admins = listOf("245007207102545921", "141314236998615040", "318071655857651723")
 val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
@@ -63,6 +65,7 @@ suspend fun main() {
                     >wolfram [query] - Query Wolfram Alpha for a simple answer
                     >summary [articleURL] - Summarize an article
                     >http [method] [URL] [args] - Perform an HTTP request
+                    >cave - Start a cave exploration game
                     >quizlet [setURL/query] - Start a Quizlet trivia game
                     >kahoot [quizURL] - Start a Kahoot trivia game
                     >skip - Skip the current question
@@ -122,12 +125,40 @@ suspend fun main() {
 
             command("http") {
                 val params = mutableMapOf<String, String>()
-                println(words.size)
                 for (rawParam in words.subList(3, words.size)) with (rawParam.split("=", limit = 2)) {
                     params += Pair(component1(), component2())
                 }
-                val response = khttp.request(words[1], words[2], params = params).text
+                val response = try {
+                    khttp.request(words[1], words[2], params = params, timeout = 5.0).text
+                } catch (e: IOException) {
+                    e.toString()
+                }
                 reply("```$response```")
+            }
+
+            command("cave") {
+                val game = CaveGame(channel, author)
+                games[channelId] = game
+                game.run {
+                    reply {
+                        title = "Cave Exploration"
+                        description = game.intro
+                        with (this@command.author) {
+                            author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                        }
+                        field("Instructions", "Navigate with single character directions (N, S, E, W)", false)
+                    }
+
+                    delay(2500)
+                    reply {
+                        title = "Cave Exploration"
+                        description = initialDescription
+                        with (creator) {
+                            author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                        }
+                        field("Exits", Humanize.oxford(initialExits), true)
+                    }
+                }
             }
 
             command("quizlet") {
@@ -135,36 +166,42 @@ suspend fun main() {
                     kwizlet.parseURL(URL(words[1]))
                 else
                     kwizlet.search(words.drop(1).joinToString(" ")).searchSets[0].id.toString()
-                val quizGame = QuizletGame(channel, author, setID)
-                games[channelId] = quizGame
-                reply {
-                    title = quizGame.set.title
-                    description = quizGame.set.description
-                    author = EmbedAuthor(quizGame.set.author)
-                    field("Total Terms", quizGame.set.termCount.toString(), false)
+                val game = QuizletGame(channel, author, setID)
+                games[channelId] = game
+                game.run {
+                    reply {
+                        title = set.title
+                        description = set.description
+                        author = EmbedAuthor(set.author)
+                        field("Total Terms", set.termCount.toString(), false)
+                    }
+
+                    delay(2500)
+                    sendQuestion()
                 }
-                delay(2500)
-                quizGame.sendQuestion()
             }
 
             command("kahoot") {
                 val kahootPath = URL(words[1]).path.split("/")
                 val quizID = kahootPath.last(String::isNotEmpty)
-                val kahootGame = KahootGame(channel, author, quizID)
-                games[channelId] = kahootGame
-                reply {
-                    title = kahootGame.quiz.title
-                    description = kahootGame.quiz.description
-                    author = EmbedAuthor(kahootGame.quiz.creator)
-                    field("Total Terms", kahootGame.quiz.questions.size.toString(), false)
-                }
+                val game = KahootGame(channel, author, quizID)
+                games[channelId] = game
+                game.run {
+                    reply {
+                        title = quiz.title
+                        description = quiz.description
+                        author = EmbedAuthor(quiz.creator)
+                        field("Total Terms", quiz.questions.size.toString(), false)
+                    }
 
-                delay(2500)
-                val question = kahootGame.next()
-                val send = StringBuilder(question.question)
-                for (i in 0 until question.answerCount)
-                    send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
-                reply(send.toString())
+                    delay(2500)
+                    with (next()) {
+                        val send = StringBuilder(question)
+                        for (i in 0 until answerCount)
+                            send.append("\n${(65 + i).toChar()}. ${choices[i].answer}")
+                        reply(send.toString())
+                    }
+                }
             }
 
             command("skip") {
@@ -186,7 +223,7 @@ suspend fun main() {
                 when {
                     game == null -> reply("No game running in this channel")
                     author != game.creator -> reply("Only the game creator can abort the game")
-                    else -> game.abort(channel)
+                    else -> game.abort()
                 }
             }
 
@@ -216,7 +253,7 @@ suspend fun main() {
                     reply("Shutting down")
                     for (gameEntry in games) {
                         ChannelClient(token, gameEntry.key).sendMessage("Bot shutting down")
-                        gameEntry.value.abort(ChannelClient(token, gameEntry.key))
+                        gameEntry.value.abort()
                     }
                     logger.info("Shutdown all active games")
                     logger.info("Bot shutdown by {}", userLog)
@@ -230,43 +267,51 @@ suspend fun main() {
 
         messageCreated { message ->
             if (!message.isFromBot && games.containsKey(message.channelId)) {
-                if (games[message.channelId]!! is QuizletGame) {
-                    val quizGame = games[message.channelId]!! as QuizletGame
-                    if (quizGame.check(message.content)) {
-                        quizGame.incScore(message.author)
-                        message.react("✅")
-                        if (quizGame.hasNext()) {
-                            delay(2500)
-                            quizGame.sendQuestion()
-                        } else {
-                            games.remove(message.channelId)
-                            val sortedScores = quizGame.scores.toSortedMap(compareByDescending{ quizGame.scores[it] })
-                            message.channel.sendMessage("") {
-                                title = "Game Results"
-                                for (scores in sortedScores.entries.withIndex())
-                                    field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
+                when {
+                    games[message.channelId]!! is CaveGame -> {
+                        val game = games[message.channelId]!! as CaveGame
+                        if (game.creator == message.author && listOf("N", "S", "E", "W").contains(message.content))
+                            game.sendCommand(message.content)
+                    }
+                    games[message.channelId]!! is QuizletGame -> {
+                        val game = games[message.channelId]!! as QuizletGame
+                        if (game.check(message.content)) {
+                            game.incScore(message.author)
+                            message.react("✅")
+                            if (game.hasNext()) {
+                                delay(2500)
+                                game.sendQuestion()
+                            } else {
+                                games.remove(message.channelId)
+                                val sortedScores = game.scores.toSortedMap(compareByDescending{ game.scores[it] })
+                                message.channel.sendMessage("") {
+                                    title = "TriviaGame Results"
+                                    for (scores in sortedScores.entries.withIndex())
+                                        field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
+                                }
                             }
                         }
                     }
-                } else {
-                    val kahootGame = games[message.channelId]!! as KahootGame
-                    if (message.content.length == 1 && kahootGame.check(message.content)) {
-                        kahootGame.incScore(message.author)
-                        message.react("✅")
-                        if (kahootGame.hasNext()) {
-                            delay(2500)
-                            val question = kahootGame.next()
-                            val send = StringBuilder(question.question)
-                            for (i in 0 until question.answerCount)
-                                send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
-                            message.channel.sendMessage(send.toString())
-                        } else {
-                            games.remove(message.channelId)
-                            val sortedScores = kahootGame.scores.toSortedMap(compareByDescending{ kahootGame.scores[it] })
-                            message.channel.sendMessage("") {
-                                title = "Game Results"
-                                for (scores in sortedScores.entries.withIndex())
-                                    field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
+                    games[message.channelId]!! is KahootGame -> {
+                        val game = games[message.channelId]!! as KahootGame
+                        if (message.content.length == 1 && game.check(message.content)) {
+                            game.incScore(message.author)
+                            message.react("✅")
+                            if (game.hasNext()) {
+                                delay(2500)
+                                val question = game.next()
+                                val send = StringBuilder(question.question)
+                                for (i in 0 until question.answerCount)
+                                    send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
+                                message.channel.sendMessage(send.toString())
+                            } else {
+                                games.remove(message.channelId)
+                                val sortedScores = game.scores.toSortedMap(compareByDescending{ game.scores[it] })
+                                message.channel.sendMessage("") {
+                                    title = "TriviaGame Results"
+                                    for (scores in sortedScores.entries.withIndex())
+                                        field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
+                                }
                             }
                         }
                     }
