@@ -57,7 +57,7 @@ class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
                     field("Exits", oxford(response.getJSONArray("exits").toList()), true)
                     val visitCount = locationPaths.count { it == locationPath }
                     if (visitCount > 1)
-                        field("Warning", "You already visited this area ${times(visitCount - 1)} before.", true)
+                        field("Warning", "You already visited this area ${times(visitCount)} before.", true)
                 }
             else
                 channel.sendMessage(response.getString("message"))
