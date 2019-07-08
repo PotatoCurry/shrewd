@@ -61,6 +61,8 @@ suspend fun main() {
                 reply(
                     """
                     >wolfram [query] - Query Wolfram Alpha for a simple answer
+                    >summary [articleURL] - Summarize an article
+                    >http [method] [URL] [args] - Perform an HTTP request
                     >quizlet [setURL/query] - Start a Quizlet trivia game
                     >kahoot [quizURL] - Start a Kahoot trivia game
                     >skip - Skip the current question
@@ -116,6 +118,16 @@ suspend fun main() {
                     field("Characters", articleChars, true)
                     field("Reduction", articleReduction, true)
                 }
+            }
+
+            command("http") {
+                val params = mutableMapOf<String, String>()
+                println(words.size)
+                for (rawParam in words.subList(3, words.size)) with (rawParam.split("=", limit = 2)) {
+                    params += Pair(component1(), component2())
+                }
+                val response = khttp.request(words[1], words[2], params = params).text
+                reply("```$response```")
             }
 
             command("quizlet") {
