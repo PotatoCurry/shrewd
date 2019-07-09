@@ -28,6 +28,7 @@ class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
     val intro: String
     val initialDescription: String
     val initialExits: List<Any>
+    val initialSeed: String
     private val locationPaths = mutableListOf<String>()
     private val locationPath: String
         get() = locationPaths.last()
@@ -38,6 +39,7 @@ class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
         initialDescription = response.getString("description")
         initialExits = response.getJSONArray("exits").toList()
         locationPaths += response.getString("locationPath")
+        initialSeed = locationPath.split("/").last()
     }
 
     suspend fun sendCommand(direction: String) {

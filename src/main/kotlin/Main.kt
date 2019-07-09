@@ -146,7 +146,8 @@ suspend fun main() {
                         with (this@command.author) {
                             author = EmbedAuthor(username, authorImageUrl = pngAvatar())
                         }
-                        field("Instructions", "Navigate with single character directions (N, S, E, W)", false)
+                        field("Instructions", "Navigate with single character directions (N, S, E, W)", true)
+                        field("Seed", initialSeed, true)
                     }
 
                     delay(2500)
@@ -268,8 +269,9 @@ suspend fun main() {
             if (!message.isFromBot && games.containsKey(message.channelId)) {
                 when (val game = games[message.channelId]) {
                     is CaveGame -> {
-                        if (game.creator == message.author && listOf("N", "S", "E", "W").contains(message.content))
-                            game.sendCommand(message.content)
+                        val direction = message.content.toUpperCase()
+                        if (game.creator == message.author && listOf("N", "S", "E", "W").contains(direction))
+                            game.sendCommand(direction)
                     }
                     is QuizletGame -> {
                         if (game.check(message.content)) {
