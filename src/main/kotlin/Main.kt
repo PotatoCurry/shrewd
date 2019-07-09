@@ -62,7 +62,7 @@ suspend fun main() {
             command("help") {
                 reply(
                     """
-                    >wolfram [query] - Query Wolfram Alpha for a simple answer
+                    >wolfram [query] - Query WolframAlpha for a simple answer
                     >summary [articleURL] - Summarize an article
                     >http [method] [URL] [args] - Perform an HTTP request
                     >cave - Start a cave exploration game
