@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory
 //import net.jeremybrooks.knicker.WordApi
 //import net.jeremybrooks.knicker.WordsApi
 import java.net.URL
+import java.nio.charset.Charset
 import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.system.exitProcess
@@ -66,6 +67,7 @@ suspend fun main() {
                     >summary [articleURL] - Summarize an article
                     >http [method] [URL] [args] - Perform an HTTP request
                     >cave - Start a cave exploration game
+                    >number [number] - Get interesting number facts
                     >quizlet [setURL/query] - Start a Quizlet trivia game
                     >kahoot [quizURL] - Start a Kahoot trivia game
                     >skip - Skip the current question
@@ -160,6 +162,12 @@ suspend fun main() {
                         field("Exits", Humanize.oxford(initialExits), true)
                     }
                 }
+            }
+
+            command("number") {
+                val response = khttp.get("http://numbersapi.com/${words[1]}")
+                response.encoding = Charset.defaultCharset()
+                reply(response.text)
             }
 
             command("quizlet") {
