@@ -8,8 +8,7 @@ import com.jessecorbett.diskord.dsl.image
 import com.jessecorbett.diskord.util.mention
 import com.jessecorbett.diskord.util.pngAvatar
 import com.jessecorbett.diskord.util.sendMessage
-import humanize.Humanize.oxford
-import humanize.Humanize.times
+import humanize.Humanize
 import io.github.potatocurry.kashoot.api.Question as KahootQuestion
 import io.github.potatocurry.kashoot.api.Quiz
 import io.github.potatocurry.kwizlet.api.Question as QuizletQuestion
@@ -63,10 +62,10 @@ class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
                     with (creator) {
                         author = EmbedAuthor(username, authorImageUrl = pngAvatar())
                     }
-                    field("Exits", oxford(response.getJSONArray("exits").toList()), true)
+                    field("Exits", Humanize.oxford(response.getJSONArray("exits").toList()), true)
                     val visitCount = locationPaths.count { it == locationPath }
                     if (visitCount > 1)
-                        field("Warning", "You already visited this area ${times(visitCount)} before.", true)
+                        field("Warning", "You already visited this area ${Humanize.times(visitCount)} before.", true)
                 }
             else
                 channel.sendMessage(response.getString("message"))

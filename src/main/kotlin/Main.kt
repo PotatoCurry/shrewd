@@ -1,6 +1,7 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 package io.github.potatocurry.shrewd
 
+import com.jessecorbett.diskord.api.model.Message
 import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
@@ -11,6 +12,7 @@ import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
+import org.json.JSONArray
 import org.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -28,6 +30,7 @@ val admins = listOf("245007207102545921", "141314236998615040", "318071655857651
 val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
 val games = mutableMapOf<String, Game>()
+val jsonEndpoint = System.getenv("SHREWD_JSONSTORE_TOKEN")
 
 suspend fun main() {
     val env = System.getenv("SHREWD_ENV")
@@ -63,6 +66,9 @@ suspend fun main() {
             command("help") {
                 reply(
                     """
+                    >help - Display this help message
+                    >echo [text] - Echo the provided text
+                    >notes [operation] [text] - Save or delete a note
                     >wolfram [query] - Query WolframAlpha for a simple answer
                     >summary [articleURL] - Summarize an article
                     >http [method] [URL] (args) - Perform an HTTP request
@@ -72,12 +78,81 @@ suspend fun main() {
                     >kahoot [quizURL] - Start a Kahoot trivia game
                     >skip - Skip the current question
                     >abort - Stop the current game
+                    >shutdown - Shutdown the bot
                     """.trimIndent()
                 ) // TODO: Make embed for this
             }
 
+            command("echo") {
+                reply(args)
+            }
+
+            command("notes"){
+                when (words[1]) {
+                    "save" -> {
+                        val note = args.removePrefix("save ")
+                        val response = khttp.get(
+                            "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes"
+                        ).jsonObject
+                        val notes = if (response.isNull("result"))
+                            JSONArray()
+                        else
+                            response.getJSONArray("result")
+                        notes.put(note)
+                        khttp.post(
+                            "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes",
+                            json = notes
+                        )
+                        reply("Saved note")
+                    }
+                    "list" -> {
+                        val response = khttp.get(
+                            "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes"
+                        ).jsonObject
+                        val notes = if (response.isNull("result"))
+                            null
+                        else
+                            response.getJSONArray("result")
+                        if (notes == null)
+                            reply("You have not saved any notes")
+                        else
+                            reply {
+                                title = "Notes"
+                                with (this@command.author) {
+                                    author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                                }
+                                for (note in notes.withIndex())
+                                    field((note.index + 1).toString(), note.value.toString(), false)
+                            }
+                    }
+                    "delete" -> {
+                        val response = khttp.get(
+                            "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes"
+                        ).jsonObject
+                        val notes = if (response.isNull("result"))
+                            null
+                        else
+                            response.getJSONArray("result")
+                        val id = words[2].toInt()
+                        when {
+                            notes == null -> reply("You have not saved any notes")
+                            notes.isNull(id - 1) -> reply("There is no note at index $id")
+                            else -> {
+                                notes.remove(id - 1)
+                                khttp.post(
+                                    "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes",
+                                    json = notes
+                                )
+                                reply("Deleted note $id")
+                            }
+                        }
+                    }
+                    else -> reply("Invalid operation")
+                }
+            }
+
             command("wolfram") {
-                val query = words.drop(1).joinToString(" ")
+                val query = content.removePrefix(">wolfram ")
                 val wolframID = System.getenv("SHREWD_WOLFRAM_ID")
                 if (wolframID == null)
                     logger.error("SHREWD_WOLFRAM_ID is null")
@@ -265,6 +340,7 @@ suspend fun main() {
                         gameEntry.value.abort()
                     }
                     logger.info("Bot shutdown by {}", userLog)
+                    delay(1000)
                     exitProcess(0)
                 } else {
                     react("\uD83D\uDE20")
@@ -326,6 +402,9 @@ suspend fun main() {
         }
     }
 }
+
+val Message.args: String
+    get() = content.split(" ", limit = 2)[1]
 
 fun getSMMRY(articleURL: String, sentenceCount: Int = 7, keywordCount: Int = 5): JSONObject { // TODO: Make object for this when ported to edukate
     val smmryKey = System.getenv("SHREWD_SMMRY_KEY")
