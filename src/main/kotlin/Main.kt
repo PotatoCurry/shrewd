@@ -65,7 +65,7 @@ suspend fun main() {
                     """
                     >wolfram [query] - Query WolframAlpha for a simple answer
                     >summary [articleURL] - Summarize an article
-                    >http [method] [URL] [args] - Perform an HTTP request
+                    >http [method] [URL] (args) - Perform an HTTP request
                     >cave - Start a cave exploration game
                     >number [number] - Get interesting number facts
                     >quizlet [setURL/query] - Start a Quizlet trivia game
