@@ -168,6 +168,21 @@ suspend fun main() {
                             }
                         }
                     }
+                    "clear" -> {
+                        val response = khttp.get(
+                            "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes"
+                        ).jsonObject
+                        val notes = if (response.isNull("result"))
+                            null
+                        else
+                            response.getJSONArray("result")
+                        if (notes == null)
+                            reply("You have not saved any notes")
+                        else {
+                            khttp.delete("https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes")
+                            reply("Cleared notes")
+                        }
+                    }
                     else -> reply("Invalid operation")
                 }
             }
