@@ -68,7 +68,7 @@ suspend fun main() {
                     """
                     >help - Display this help message
                     >echo [text] - Echo the provided text
-                    >notes [operation] [text] - Save or delete a note
+                    >notes [operation] [text] - Save, edit or delete a note
                     >wolfram [query] - Query WolframAlpha for a simple answer
                     >summary [articleURL] - Summarize an article
                     >http [method] [URL] (args) - Perform an HTTP request
@@ -124,6 +124,27 @@ suspend fun main() {
                                 for (note in notes.withIndex())
                                     field((note.index + 1).toString(), note.value.toString(), false)
                             }
+                    }
+                    "edit" -> {
+                        val id = words[2].toInt()
+                        val note = args.removePrefix("edit $id ")
+                        val response = khttp.get(
+                            "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes"
+                        ).jsonObject
+                        val notes = if (response.isNull("result"))
+                            JSONArray()
+                        else
+                            response.getJSONArray("result")
+                        if (id > notes.length())
+                            reply("There is no element at index $id")
+                        else {
+                            notes.put(id - 1, note)
+                            khttp.post(
+                                "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes",
+                                json = notes
+                            )
+                            reply("Edited note")
+                        }
                     }
                     "delete" -> {
                         val response = khttp.get(
