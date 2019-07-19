@@ -380,6 +380,8 @@ suspend fun main() {
                     exitProcess(0)
                 } else {
                     react("\uD83D\uDE20")
+                    val dm = clientStore.discord.createDM(CreateDM(author.id))
+                    ChannelClient(token, dm.id).sendMessage("frick you")
                     logger.trace("Shutdown request by {} denied", userLog)
                 }
             }
