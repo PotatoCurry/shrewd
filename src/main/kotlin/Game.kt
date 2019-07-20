@@ -100,6 +100,7 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
     val set: Set = kwizlet.getSet(setID)
     private val questions: Iterator<QuizletQuestion>
     private lateinit var currentQuestion: QuizletQuestion
+    private var isActive = false
 
     init {
         questions = set.questions.shuffled().iterator()
@@ -113,6 +114,7 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
             if (imageURL != null)
                 image(imageURL)
         }
+        isActive = true
         logger.trace("Sending question \"{}\" in channel {}", question.definition, channel.channelId)
         delay(10000)
         if (question == peek() && games.containsKey(channel.channelId)) {
@@ -142,13 +144,15 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
     }
 
     fun check(answer: String): Boolean {
-        if (!::currentQuestion.isInitialized)
+        if (!::currentQuestion.isInitialized || !isActive)
             return false
         val lowerAnswer = answer.toLowerCase()
         val lowerTerm = currentQuestion.term.toLowerCase()
         val ratio = FuzzySearch.ratio(lowerAnswer, lowerTerm)
         val matches = ratio >= 80
-        logger.trace("Answer {} ${if (matches) "matches" else "does not match"} {} with a ratio of {}", lowerAnswer, lowerTerm, ratio)
+        logger.trace("Answer {} compared to {} with a ratio of {}", lowerAnswer, lowerTerm, ratio)
+        if (matches)
+            isActive = false
         return matches
     }
 

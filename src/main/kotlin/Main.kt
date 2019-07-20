@@ -302,6 +302,7 @@ suspend fun main() {
             }
 
             command("kahoot") {
+                reply("Kahoot game are unstable as fuck right now play at your own risk")
                 val kahootPath = URL(words[1]).path.split("/")
                 val quizID = kahootPath.last(String::isNotEmpty)
                 val game = KahootGame(channel, author, quizID)
