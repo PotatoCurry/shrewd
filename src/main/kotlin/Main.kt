@@ -242,7 +242,7 @@ suspend fun main() {
                     params += Pair(component1(), component2())
                 }
                 val response = try {
-                    khttp.request(words[1], words[2], params = params, timeout = 5.0).text
+                    khttp.request(words[1].toUpperCase(), words[2], params = params, timeout = 5.0).text
                 } catch (e: IOException) {
                     e.toString()
                 }
