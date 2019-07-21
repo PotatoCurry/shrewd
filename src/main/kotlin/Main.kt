@@ -429,7 +429,7 @@ suspend fun main() {
                                 games.remove(message.channelId)
                                 val sortedScores = game.scores.toSortedMap(compareByDescending{ game.scores[it] })
                                 message.channel.sendMessage("") {
-                                    title = "TriviaGame Results"
+                                    title = "Game Results"
                                     for (scores in sortedScores.entries.withIndex())
                                         field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
                                 }
