@@ -26,6 +26,7 @@ import java.time.ZoneId
 import kotlin.system.exitProcess
 
 val logger: Logger = LoggerFactory.getLogger("io.github.potatocurry.shrewd")
+lateinit var globalClient: ClientStore
 val admins = listOf("245007207102545921", "141314236998615040", "318071655857651723")
 val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
@@ -47,6 +48,8 @@ suspend fun main() {
     logger.info("Obtained bot token")
 
     bot(token) {
+        globalClient = clientStore
+
         started {
             val dm = clientStore.discord.createDM(CreateDM("245007207102545921"))
             ChannelClient(token, dm.id).sendMessage("") {
@@ -282,11 +285,11 @@ suspend fun main() {
             }
 
             command("quizlet") {
-                val setID = if (words[1].contains("http"))
+                val setId = if ("http" in words[1])
                     kwizlet.parseURL(URL(words[1]))
                 else
                     kwizlet.search(words.drop(1).joinToString(" ")).searchSets[0].id.toString()
-                val game = QuizletGame(channel, author, setID)
+                val game = QuizletGame(channel, author, setId)
                 games[channelId] = game
                 game.run {
                     reply {
@@ -302,10 +305,10 @@ suspend fun main() {
             }
 
             command("kahoot") {
-                reply("Kahoot game are unstable as fuck right now play at your own risk")
+                reply("Kahoot games are undergoing a major overhaul and are not yet stable")
                 val kahootPath = URL(words[1]).path.split("/")
-                val quizID = kahootPath.last(String::isNotEmpty)
-                val game = KahootGame(channel, author, quizID)
+                val quizId = kahootPath.last(String::isNotEmpty)
+                val game = KahootGame(channel, author, quizId)
                 games[channelId] = game
                 game.run {
                     reply {
@@ -316,12 +319,7 @@ suspend fun main() {
                     }
 
                     delay(2500)
-                    with (next()) {
-                        val send = StringBuilder(question)
-                        for (i in 0 until answerCount)
-                            send.append("\n${(65 + i).toChar()}. ${choices[i].answer}")
-                        reply(send.toString())
-                    }
+                    game.start()
                 }
             }
 
@@ -369,7 +367,7 @@ suspend fun main() {
 
             command("shutdown") {
                 val userLog = "${author.username} ($authorId)"
-                if (admins.contains(authorId)) {
+                if (authorId in admins) {
                     react("\uD83D\uDE22")
                     reply("Shutting down")
                     for (gameEntry in games) {
@@ -393,7 +391,7 @@ suspend fun main() {
                 when (val game = games[message.channelId]) {
                     is CaveGame -> {
                         val direction = message.content.toUpperCase()
-                        if (game.creator == message.author && listOf("N", "S", "E", "W").contains(direction))
+                        if (game.creator == message.author && direction in listOf("N", "S", "E", "W"))
                             game.sendCommand(direction)
                     }
                     is QuizletGame -> {
@@ -414,26 +412,20 @@ suspend fun main() {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        reactionAdded { reaction ->
+            if (!clientStore.discord.getUser(reaction.userId).isBot && games.containsKey(reaction.channelId)) {
+                println("Has reaction s1")
+                when (val game = games[reaction.channelId]) {
                     is KahootGame -> {
-                        if (message.content.length == 1 && game.check(message.content)) {
-                            game.incScore(message.author)
-                            message.react("✅")
-                            if (game.hasNext()) {
-                                delay(2500)
-                                val question = game.next()
-                                val send = StringBuilder(question.question)
-                                for (i in 0 until question.answerCount)
-                                    send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
-                                message.channel.sendMessage(send.toString())
-                            } else {
-                                games.remove(message.channelId)
-                                val sortedScores = game.scores.toSortedMap(compareByDescending{ game.scores[it] })
-                                message.channel.sendMessage("") {
-                                    title = "Game Results"
-                                    for (scores in sortedScores.entries.withIndex())
-                                        field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
-                                }
-                            }
+                        println("Has reaction s2")
+                        val choice = game.choiceMap[reaction.emoji.name]
+                        println("Has reaction s3")
+                        if (reaction.messageId == game.currentMessage && choice != null && game.isActive) {
+                            game.addChoice(reaction.userId, choice)
                         }
                     }
                 }
@@ -445,7 +437,7 @@ suspend fun main() {
 val Message.args: String
     get() = content.split(" ", limit = 2)[1]
 
-fun getSMMRY(articleURL: String, sentenceCount: Int = 7, keywordCount: Int = 5): JSONObject { // TODO: Make object for this when ported to edukate
+fun getSMMRY(articleURL: String, sentenceCount: Int = 7, keywordCount: Int = 5): JSONObject { // TODO: Make object for this when ported to edu(lib/kate)
     val smmryKey = System.getenv("SHREWD_SMMRY_KEY")
     val params = mapOf(
         "SM_API_KEY" to smmryKey,

@@ -1,5 +1,7 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
 package io.github.potatocurry.shrewd
 
+import com.jessecorbett.diskord.api.model.Message
 import com.jessecorbett.diskord.api.model.User
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
@@ -13,7 +15,7 @@ import io.github.potatocurry.kashoot.api.Question as KahootQuestion
 import io.github.potatocurry.kashoot.api.Quiz
 import io.github.potatocurry.kwizlet.api.Question as QuizletQuestion
 import io.github.potatocurry.kwizlet.api.Set
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import me.xdrop.fuzzywuzzy.FuzzySearch
 
 abstract class Game(val channel: ChannelClient, val creator: User) {
@@ -168,10 +170,53 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
 class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaGame(channel, creator) {
     val quiz: Quiz = kashoot.getQuiz(quizID)
     private val questions: Iterator<KahootQuestion>
+    lateinit var currentMessage: String
     private lateinit var currentQuestion: KahootQuestion
+    lateinit var currentChoices: MutableMap<String, String>
+    var isActive = false
+    private lateinit var mainJob: Job
 
     init {
         questions = quiz.questions.shuffled().iterator()
+    }
+
+    fun start() = runBlocking {
+        mainJob = launch {
+            while (hasNext()) {
+                sendQuestion()
+                delay(2500)
+            }
+
+            games.remove(channel.channelId)
+            val sortedScores = scores.toSortedMap(compareByDescending { scores[it] })
+            channel.sendMessage("") {
+                title = "Game Results"
+                for (scores in sortedScores.entries.withIndex())
+                    field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
+            }
+        }
+    }
+
+    private suspend fun sendQuestion() {
+        currentQuestion = next()
+        val send = StringBuilder(currentQuestion.question)
+        for (i in 0 until currentQuestion.answerCount)
+            send.append("\n${(65 + i).toChar()}. ${currentQuestion.choices[i].answer}")
+        val message = channel.sendMessage(send.toString())
+        for (i in 0 until currentQuestion.answerCount)
+            message.react(emojiMap.getValue((65 + i).toChar().toString()))
+        currentMessage = message.id
+        currentChoices = mutableMapOf()
+        isActive = true
+
+        delay(10000)
+        isActive = false
+        channel.sendMessage("${Humanize.oxford(currentQuestion.choices.filter { it.correct }.map { it.answer })} was correct")
+        val correctUsers = currentChoices.filterValues { check(it) }.keys
+        correctUsers.forEach {
+            val user = globalClient.discord.getUser(it)
+            incScore(user)
+        }
     }
 
     fun hasNext(): Boolean {
@@ -187,39 +232,36 @@ class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaG
         return currentQuestion
     }
 
+    val choiceMap = mapOf(
+        "\uD83C\uDDE6" to "A",
+        "\uD83C\uDDE7" to "B",
+        "\uD83C\uDDE8" to "C",
+        "\uD83C\uDDE9" to "D"
+    )
+
+    val emojiMap = choiceMap.entries.associate{(emoji,choice)-> choice to emoji}
+
+    fun addChoice(userId: String, choice: String) {
+        println("Putting in currentChoices")
+        currentChoices.putIfAbsent(userId, choice)
+    }
+
     fun check(answer: String): Boolean {
         if (!::currentQuestion.isInitialized)
             return false
-        val charAnswer = answer.toUpperCase().toCharArray().single()
-        if (charAnswer.isLetter() && charAnswer.toInt() - 65 < currentQuestion.answerCount) {
-            return currentQuestion.correctAnswers.contains(currentQuestion.choices[charAnswer.toInt() - 65].answer)
+        val charAnswer = answer.single()
+        if (charAnswer.toInt() - 65 < currentQuestion.answerCount) {
+            return currentQuestion.choices[charAnswer.toInt() - 65].answer in currentQuestion.correctAnswers
         }
         return false
-        // TODO: Add logging when converted to emoji reaction answers
     }
 
-// TODO: Revisit emoji kahoot reactions when Diskord adds rich reactions or use newReaction events
+    override suspend fun abort() {
+        mainJob.cancel()
+        super.abort()
+    }
+}
 
-//    suspend fun start(channel: ChannelClient) {
-//        channel.sendMessage("Starting game @here") {
-//            title = quiz.title
-//            description = quiz.description
-//            author = EmbedAuthor(quiz.creator)
-//            field("Total Terms", quiz.questions.size.toString(), false)
-//        }
-//        while (questions.hasNext()) {
-//            val question = questions.next()
-//            channel.sendMessage(question.question)
-//            delay(2500)
-//            val send = StringBuilder()
-//            for (i in 0 until question.answerCount)
-//                send.append("${(65 + i).toChar()}. ${question.choices[i].answer}\n") // TODO: Use regional indicator emoji
-//            send.append("React your answer below!")
-//            val message = channel.sendMessage(send.toString())
-//            delay(5000)
-//            val reactions = message.reactions
-//            channel.sendMessage("\"${question.correctAnswer}\" was the correct answer") // TODO: Make DSL with everyone's results
-//
-//        }
-//    }
+suspend fun Message.react(emoji: String) {
+    globalClient.channels[channelId].addMessageReaction(id, emoji)
 }
