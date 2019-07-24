@@ -111,7 +111,7 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
     suspend fun sendQuestion() {
         val question = next()
         channel.sendMessage("") {
-            field("Question", question.definition, false)
+            field("Question", question.definition ?: "No definition", false)
             val imageURL = question.imageURL
             if (imageURL != null)
                 image(imageURL)
@@ -122,7 +122,7 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
         if (question == peek() && games.containsKey(channel.channelId)) {
             val hint = generateHint(question.term)
             channel.sendMessage("") {
-                field("Question", question.definition, false)
+                field("Question", question.definition ?: "No definition", false)
                 val imageURL = question.imageURL
                 if (imageURL != null)
                     image(imageURL)
