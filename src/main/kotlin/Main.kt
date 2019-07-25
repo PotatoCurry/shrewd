@@ -262,19 +262,22 @@ suspend fun main() {
                         with (this@command.author) {
                             author = EmbedAuthor(username, authorImageUrl = pngAvatar())
                         }
-                        field("Instructions", "Navigate with single character directions (N, S, E, W)", true)
+                        field("Instructions", "Navigate with single character directions or reactions", true)
                         field("Seed", initialSeed, true)
                     }
 
                     delay(2500)
-                    reply {
+                    currentMessage = reply {
                         title = "Cave Exploration"
                         description = initialDescription
                         with (creator) {
                             author = EmbedAuthor(username, authorImageUrl = pngAvatar())
                         }
                         field("Exits", Humanize.oxford(initialExits), true)
-                    }
+                    }.apply {
+                        for (exit in initialExits)
+                            react(emojiMap.getValue(exit.toString()))
+                    }.id
                 }
             }
 
@@ -418,14 +421,19 @@ suspend fun main() {
 
         reactionAdded { reaction ->
             if (!clientStore.discord.getUser(reaction.userId).isBot && games.containsKey(reaction.channelId)) {
-                when (val game = games[reaction.channelId]) {
-                    is KahootGame -> {
-                        val choice = game.choiceMap[reaction.emoji.name]
-                        if (reaction.messageId == game.currentMessage && choice != null && game.isActive) {
-                            game.addChoice(reaction.userId, choice)
+                val choice = choiceMap[reaction.emoji.name]
+                if (choice != null)
+                    when (val game = games[reaction.channelId]) {
+                        is CaveGame -> {
+                            if (reaction.messageId == game.currentMessage && game.creator.id == reaction.userId)
+                                game.sendCommand(choice)
+                        }
+                        is KahootGame -> {
+                            if (reaction.messageId == game.currentMessage && game.isActive) {
+                                game.addChoice(reaction.userId, choice)
+                            }
                         }
                     }
-                }
             }
         }
     }

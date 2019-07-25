@@ -18,6 +18,22 @@ import io.github.potatocurry.kwizlet.api.Set
 import kotlinx.coroutines.*
 import me.xdrop.fuzzywuzzy.FuzzySearch
 
+val choiceMap = mapOf(
+    // Kahoot choices
+    "\uD83C\uDDE6" to "A",
+    "\uD83C\uDDE7" to "B",
+    "\uD83C\uDDE8" to "C",
+    "\uD83C\uDDE9" to "D",
+
+    // Cave directions
+    "\uD83C\uDDF3" to "N",
+    "\uD83C\uDDF8" to "S",
+    "\uD83C\uDDEA" to "E",
+    "\uD83C\uDDFC" to "W"
+)
+
+val emojiMap = choiceMap.entries.associate{ (emoji, choice) -> choice to emoji }
+
 abstract class Game(val channel: ChannelClient, val creator: User) {
     open suspend fun abort(){
         games.remove(channel.channelId)
@@ -30,6 +46,7 @@ class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
     val initialDescription: String
     val initialExits: List<Any>
     val initialSeed: String
+    lateinit var currentMessage: String
     private val locationPaths = mutableListOf<String>()
     private val locationPath: String
         get() = locationPaths.last()
@@ -57,21 +74,26 @@ class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
             games.remove(channel.channelId)
             logger.trace("Cave game ended in channel {}", channel.channelId)
         } else {
-            if (response.has("description"))
-                channel.sendMessage("") {
+            locationPaths += response.getString("locationPath")
+            val exits = response.getJSONArray("exits").toList()
+
+            if (response.has("description")) {
+                currentMessage = channel.sendMessage("") {
                     title = "Cave Exploration"
                     description = response.getString("description")
                     with (creator) {
                         author = EmbedAuthor(username, authorImageUrl = pngAvatar())
                     }
-                    field("Exits", Humanize.oxford(response.getJSONArray("exits").toList()), true)
-                    val visitCount = locationPaths.count { it == locationPath }
+                    field("Exits", Humanize.oxford(exits), true)
+                    val visitCount = locationPaths.count { it == locationPath } - 1
                     if (visitCount > 1)
                         field("Warning", "You already visited this area ${Humanize.times(visitCount)} before.", true)
-                }
-            else
+                }.apply {
+                    for (exit in exits)
+                        react(emojiMap.getValue(exit.toString()))
+                }.id
+            } else
                 channel.sendMessage(response.getString("message"))
-            locationPaths += response.getString("locationPath")
         }
     }
 
@@ -201,10 +223,10 @@ class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaG
         val send = StringBuilder(question.question)
         for (i in 0 until question.answerCount)
             send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
-        val message = channel.sendMessage(send.toString())
-        for (i in 0 until question.answerCount)
-            message.react(emojiMap.getValue((65 + i).toChar().toString()))
-        currentMessage = message.id
+        currentMessage = channel.sendMessage(send.toString()).apply {
+            for (i in 0 until question.answerCount)
+                react(emojiMap.getValue((65 + i).toChar().toString()))
+        }.id
         currentChoices = mutableMapOf()
         isActive = true
 
@@ -217,15 +239,6 @@ class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaG
             incScore(user)
         }
     }
-
-    val choiceMap = mapOf(
-        "\uD83C\uDDE6" to "A",
-        "\uD83C\uDDE7" to "B",
-        "\uD83C\uDDE8" to "C",
-        "\uD83C\uDDE9" to "D"
-    )
-
-    val emojiMap = choiceMap.entries.associate{ (emoji, choice) -> choice to emoji }
 
     fun addChoice(userId: String, choice: String) {
         currentChoices.putIfAbsent(userId, choice)
