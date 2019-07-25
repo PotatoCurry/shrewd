@@ -418,12 +418,9 @@ suspend fun main() {
 
         reactionAdded { reaction ->
             if (!clientStore.discord.getUser(reaction.userId).isBot && games.containsKey(reaction.channelId)) {
-                println("Has reaction s1")
                 when (val game = games[reaction.channelId]) {
                     is KahootGame -> {
-                        println("Has reaction s2")
                         val choice = game.choiceMap[reaction.emoji.name]
-                        println("Has reaction s3")
                         if (reaction.messageId == game.currentMessage && choice != null && game.isActive) {
                             game.addChoice(reaction.userId, choice)
                         }

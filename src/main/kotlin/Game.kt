@@ -171,7 +171,6 @@ class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaG
     val quiz: Quiz = kashoot.getQuiz(quizID)
     private val questions: Iterator<KahootQuestion>
     lateinit var currentMessage: String
-    private lateinit var currentQuestion: KahootQuestion
     lateinit var currentChoices: MutableMap<String, String>
     var isActive = false
     private lateinit var mainJob: Job
@@ -182,7 +181,7 @@ class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaG
 
     fun start() = runBlocking {
         mainJob = launch {
-            while (hasNext()) {
+            while (questions.hasNext()) {
                 sendQuestion()
                 delay(2500)
             }
@@ -198,12 +197,12 @@ class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaG
     }
 
     private suspend fun sendQuestion() {
-        currentQuestion = next()
-        val send = StringBuilder(currentQuestion.question)
-        for (i in 0 until currentQuestion.answerCount)
-            send.append("\n${(65 + i).toChar()}. ${currentQuestion.choices[i].answer}")
+        val question = questions.next()
+        val send = StringBuilder(question.question)
+        for (i in 0 until question.answerCount)
+            send.append("\n${(65 + i).toChar()}. ${question.choices[i].answer}")
         val message = channel.sendMessage(send.toString())
-        for (i in 0 until currentQuestion.answerCount)
+        for (i in 0 until question.answerCount)
             message.react(emojiMap.getValue((65 + i).toChar().toString()))
         currentMessage = message.id
         currentChoices = mutableMapOf()
@@ -211,25 +210,12 @@ class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaG
 
         delay(10000)
         isActive = false
-        channel.sendMessage("${Humanize.oxford(currentQuestion.choices.filter { it.correct }.map { it.answer })} was correct")
-        val correctUsers = currentChoices.filterValues { check(it) }.keys
+        channel.sendMessage("${Humanize.oxford(question.choices.filter { it.correct }.map { it.answer })} was correct")
+        val correctUsers = currentChoices.filterValues { check(question, it) }.keys
         correctUsers.forEach {
             val user = globalClient.discord.getUser(it)
             incScore(user)
         }
-    }
-
-    fun hasNext(): Boolean {
-        return questions.hasNext()
-    }
-
-    fun peek(): KahootQuestion {
-        return currentQuestion
-    }
-
-    fun next(): KahootQuestion {
-        currentQuestion = questions.next()
-        return currentQuestion
     }
 
     val choiceMap = mapOf(
@@ -239,19 +225,16 @@ class KahootGame(channel: ChannelClient, creator: User, quizID: String): TriviaG
         "\uD83C\uDDE9" to "D"
     )
 
-    val emojiMap = choiceMap.entries.associate{(emoji,choice)-> choice to emoji}
+    val emojiMap = choiceMap.entries.associate{ (emoji, choice) -> choice to emoji }
 
     fun addChoice(userId: String, choice: String) {
-        println("Putting in currentChoices")
         currentChoices.putIfAbsent(userId, choice)
     }
 
-    fun check(answer: String): Boolean {
-        if (!::currentQuestion.isInitialized)
-            return false
+    private fun check(question: KahootQuestion, answer: String): Boolean {
         val charAnswer = answer.single()
-        if (charAnswer.toInt() - 65 < currentQuestion.answerCount) {
-            return currentQuestion.choices[charAnswer.toInt() - 65].answer in currentQuestion.correctAnswers
+        if (charAnswer.toInt() - 65 < question.answerCount) {
+            return question.choices[charAnswer.toInt() - 65].answer in question.correctAnswers
         }
         return false
     }
