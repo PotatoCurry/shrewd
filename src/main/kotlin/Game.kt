@@ -78,7 +78,7 @@ class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
             val exits = response.getJSONArray("exits").toList()
 
             if (response.has("description")) {
-                currentMessage = channel.sendMessage("") {
+                currentMessage = channel.sendMessage("") { // TODO: Edit one message instead of sending dozens
                     title = "Cave Exploration"
                     description = response.getString("description")
                     with (creator) {
