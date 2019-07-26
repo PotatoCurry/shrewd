@@ -55,12 +55,12 @@ suspend fun main() {
             ChannelClient(token, dm.id).sendMessage("") {
                 description = "Bot Started"
                 field("Environment", if (env == "PROD") "Production" else "Development", true)
-//                field("Guilds", clientStore.guilds, true)
+//                field("Guilds", clientStore.discord.getGuilds().size.toString(), true)
                 timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
             }
             logger.info("Startup message sent")
 
-//            fixedRateTimer("Rich Presence", true, 0L, 60 * 1000) {
+//            fixedRateTimer("Rich Presence", true, 0L, 60000) {
 //
 //            }
         }
@@ -81,6 +81,8 @@ suspend fun main() {
                     >kahoot [quizURL] - Start a Kahoot trivia game
                     >skip - Skip the current question
                     >abort - Stop the current game
+                    >suggest [suggestion] - Submit a suggestion to the shrewd starboard
+                    >hq - Get a link to Shrewd HQ
                     >shutdown - Shutdown the bot
                     """.trimIndent()
                 ) // TODO: Make embed for this
@@ -367,6 +369,21 @@ suspend fun main() {
 //                    timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
 //                }
 //            }
+
+            command("suggest") {
+                val message = ChannelClient(token, "604144590835941386").sendMessage("") {
+                    with (this@command.author) {
+                        author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                    }
+                    description = args
+                    timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
+                }
+                message.react("⭐")
+            }
+
+            command("hq") {
+                reply("https://discord.gg/eFxB7ck")
+            }
 
             command("shutdown") {
                 val userLog = "${author.username} ($authorId)"
