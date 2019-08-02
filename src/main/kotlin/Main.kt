@@ -94,7 +94,7 @@ suspend fun main() {
 
             command("notes"){
                 when (words[1]) {
-                    "save" -> {
+                    "save", "add" -> {
                         val note = args.removePrefix("save ")
                         val response = khttp.get(
                             "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes"
@@ -110,7 +110,7 @@ suspend fun main() {
                         )
                         reply("Saved note")
                     }
-                    "list" -> {
+                    "list", "show", "display" -> {
                         val response = khttp.get(
                             "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes"
                         ).jsonObject
@@ -151,7 +151,7 @@ suspend fun main() {
                             reply("Edited note")
                         }
                     }
-                    "delete" -> {
+                    "delete", "remove" -> {
                         val response = khttp.get(
                             "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/notes"
                         ).jsonObject
