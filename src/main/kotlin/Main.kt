@@ -12,6 +12,9 @@ import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
+import moe.tlaster.kotlinpgp.KotlinPGP
+import moe.tlaster.kotlinpgp.data.EncryptParameter
+import moe.tlaster.kotlinpgp.data.PublicKeyData
 import org.json.JSONArray
 import org.json.JSONObject
 import org.slf4j.Logger
@@ -81,6 +84,8 @@ suspend fun main() {
                     >kahoot [quizURL] - Start a Kahoot trivia game
                     >skip - Skip the current question
                     >abort - Stop the current game
+                    >keybase [id] - Link your account to your keybase public key
+                    >encrypt [message] [recipients] - Encrypt a message using the given recipients' public key
                     >suggest [suggestion] - Submit a suggestion to the shrewd starboard
                     >hq - Get a link to Shrewd HQ
                     >shutdown - Shutdown the bot
@@ -197,11 +202,13 @@ suspend fun main() {
                 val wolframID = System.getenv("SHREWD_WOLFRAM_ID")
                 if (wolframID == null)
                     logger.error("SHREWD_WOLFRAM_ID is null")
-                val params = mapOf(
-                    "i" to query,
-                    "appid" to wolframID
+                val response = khttp.get(
+                    "https://api.wolframalpha.com/v1/result",
+                    params = mapOf(
+                        "i" to query,
+                        "appid" to wolframID
+                    )
                 )
-                val response = khttp.get("https://api.wolframalpha.com/v1/result", params = params)
                 val answer = try {
                     when (response.statusCode) {
                         200 -> {
@@ -370,6 +377,25 @@ suspend fun main() {
 //                }
 //            }
 
+            command("keybase") {
+                khttp.post(
+                    "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/pgp",
+                    json = mapOf("keybase" to args)
+                )
+                reply("Set Keybase ID")
+            }
+
+            command("encrypt") {
+                val recipientKeys = usersMentioned.map { PublicKeyData(getKeybaseKey(it.id)) }
+                val encrypted = KotlinPGP.encrypt(
+                    EncryptParameter(
+                        args,
+                        recipientKeys
+                    )
+                )
+                reply(encrypted)
+            }
+
             command("suggest") {
                 val message = ChannelClient(token, "604144590835941386").sendMessage("") {
                     with (this@command.author) {
@@ -461,12 +487,37 @@ val Message.args: String
 
 fun getSMMRY(articleURL: String, sentenceCount: Int = 7, keywordCount: Int = 5): JSONObject { // TODO: Make object for this when ported to edu(lib/kate)
     val smmryKey = System.getenv("SHREWD_SMMRY_KEY")
-    val params = mapOf(
-        "SM_API_KEY" to smmryKey,
-        "SM_LENGTH" to sentenceCount.toString(),
-        "SM_KEYWORD_COUNT" to keywordCount.toString(),
-        "SM_URL" to articleURL
+    val response = khttp.get(
+        "https://api.smmry.com",
+        params = mapOf(
+            "SM_API_KEY" to smmryKey,
+            "SM_LENGTH" to sentenceCount.toString(),
+            "SM_KEYWORD_COUNT" to keywordCount.toString(),
+            "SM_URL" to articleURL
+        )
     )
-    val response = khttp.get("https://api.smmry.com", params = params)
     return response.jsonObject
+}
+
+fun getKeybaseKey(userId: String): String {
+    val response = khttp.get(
+        "https://www.jsonstore.io/$jsonEndpoint/users/$userId/pgp"
+    ).jsonObject
+    val keybaseId = response
+        .getJSONObject("result")
+        .getString("keybase")
+    val keybaseUser = khttp.get(
+        "https://keybase.io/_/api/1.0/user/lookup.json",
+        params = mapOf(
+            "usernames" to keybaseId,
+            "fields" to "public_keys"
+        )
+    ).jsonObject
+    val pubKey = keybaseUser
+        .getJSONArray("them")
+        .getJSONObject(0)
+        .getJSONObject("public_keys")
+        .getJSONObject("primary")
+        .getString("bundle")
+    return pubKey
 }
