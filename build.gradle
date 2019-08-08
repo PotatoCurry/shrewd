@@ -41,3 +41,5 @@ jar {
         attributes "Main-Class": "io.github.potatocurry.shrewd.MainKt"
     }
 }
+
+task stage dependsOn build
