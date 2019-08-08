@@ -42,4 +42,4 @@ jar {
     }
 }
 
-task stage dependsOn build
+task stage dependsOn shadowJar
