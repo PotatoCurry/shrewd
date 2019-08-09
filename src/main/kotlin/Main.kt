@@ -393,7 +393,7 @@ suspend fun main() {
                         recipientKeys
                     )
                 )
-                reply(encrypted)
+                reply("```$encrypted```")
             }
 
             command("suggest") {
