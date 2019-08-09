@@ -25,7 +25,7 @@ dependencies {
     implementation "com.github.mfornos:humanize-slim:1.2.2"
     implementation "org.slf4j:slf4j-api:1.7.27"
     implementation "ch.qos.logback:logback-classic:1.2.3"
-    implementation "io.sentry:sentry-logback:1.7.25"
+    implementation "io.sentry:sentry-logback:1.7.26"
 }
 
 compileKotlin {
