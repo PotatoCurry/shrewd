@@ -393,7 +393,7 @@ suspend fun main() {
                         recipientKeys
                     )
                 )
-                reply("```$encrypted```")
+                replyAndDelete("```$encrypted```")
             }
 
             command("suggest") {
