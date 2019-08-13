@@ -140,6 +140,7 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
         }
         isActive = true
         logger.trace("Sending question \"{}\" in channel {}", question.definition, channel.channelId)
+
         delay(10000)
         if (question == peek() && games.containsKey(channel.channelId)) {
             val hint = generateHint(question.term)
@@ -151,6 +152,32 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
                 field("Hint", hint, false)
             }
             logger.trace("Sending hint \"{}\" in channel {}", hint, channel.channelId)
+        }
+
+        delay(20000)
+        if (question == peek() && games.containsKey(channel.channelId)) {
+            channel.sendMessage("") {
+                field("Question", question.definition ?: "No definition", false)
+                val imageURL = question.imageURL
+                if (imageURL != null)
+                    image(imageURL)
+                field("Answer", question.term, false)
+            }
+            logger.trace("Sending answer \"{}\" in channel {}", question.term, channel.channelId)
+
+            // TODO: Make method to reduce code duplication
+            if (hasNext()) {
+                delay(2500)
+                sendQuestion()
+            } else {
+                games.remove(channel.channelId)
+                val sortedScores = scores.toSortedMap(compareByDescending{ scores[it] })
+                channel.sendMessage("") {
+                    title = "TriviaGame Results"
+                    for (scores in sortedScores.entries.withIndex())
+                        field("${scores.index + 1}. ${scores.value.key.username}", "${scores.value.value} points", false)
+                }
+            }
         }
     }
 
