@@ -124,7 +124,7 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
     val set: Set = kwizlet.getSet(setID)
     private val questions: Iterator<QuizletQuestion>
     private lateinit var currentQuestion: QuizletQuestion
-    private var isActive = false
+    var isActive = false
 
     init {
         questions = set.questions.shuffled().iterator()
@@ -175,8 +175,6 @@ class QuizletGame(channel: ChannelClient, creator: User, setID: String): TriviaG
         val ratio = FuzzySearch.ratio(lowerAnswer, lowerTerm)
         val matches = ratio >= 80
         logger.trace("Answer {} compared to {} with a ratio of {}", lowerAnswer, lowerTerm, ratio)
-        if (matches)
-            isActive = false
         return matches
     }
 

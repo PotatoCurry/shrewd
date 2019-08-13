@@ -442,6 +442,7 @@ suspend fun main() {
                     }
                     is QuizletGame -> {
                         if (game.check(message.content)) {
+                            game.isActive = false
                             game.incScore(message.author)
                             message.react("✅")
                             if (game.hasNext()) {
@@ -513,11 +514,10 @@ fun getKeybaseKey(userId: String): String {
             "fields" to "public_keys"
         )
     ).jsonObject
-    val pubKey = keybaseUser
+    return keybaseUser
         .getJSONArray("them")
         .getJSONObject(0)
         .getJSONObject("public_keys")
         .getJSONObject("primary")
         .getString("bundle")
-    return pubKey
 }
