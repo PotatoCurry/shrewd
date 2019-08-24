@@ -1,6 +1,7 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 package io.github.potatocurry.shrewd
 
+import biweekly.Biweekly
 import com.jessecorbett.diskord.api.model.Message
 import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
@@ -26,6 +27,7 @@ import java.net.URL
 import java.nio.charset.Charset
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.*
 import kotlin.system.exitProcess
 
 val logger: Logger = LoggerFactory.getLogger("io.github.potatocurry.shrewd")
@@ -127,7 +129,6 @@ suspend fun main() {
                             reply("You have not saved any notes")
                         else
                             reply {
-                                title = "Notes"
                                 with (this@command.author) {
                                     author = EmbedAuthor(username, authorImageUrl = pngAvatar())
                                 }
@@ -394,6 +395,42 @@ suspend fun main() {
                     )
                 )
                 replyAndDelete("```$encrypted```")
+            }
+
+            command("cal") {
+                when (words[1]) {
+                    "set" -> {
+                        val calendarUrl = args.removePrefix("set ")
+                        khttp.post(
+                            "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/calendar",
+                            json = mapOf("url" to calendarUrl)
+                        )
+                        reply("Set calendar URL")
+                    }
+                    "list" -> {
+                        val calendarUrlJson = khttp.get(
+                            "https://www.jsonstore.io/$jsonEndpoint/users/$authorId/calendar"
+                        ).jsonObject
+                        val calendarUrl = calendarUrlJson
+                            .getJSONObject("result")
+                            .getString("url")
+                            .replaceBefore("://", "http")
+                        val calendarText = khttp.get(calendarUrl).text
+                        val calendar = Biweekly.parse(calendarText).first()
+                        val events = calendar.events// .all().subList(0, 1) // filter by only current week
+                        reply {
+                            with (this@command.author) {
+                                author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                            }
+                            events.subList(0, 5).forEach { event -> // filter to this week
+                                val name = event.summary.value
+                                val date = Date.from(event.dateStart.value.toInstant())
+                                val description = event.description.value
+                                field("$name (${Humanize.naturalTime(date)})", description, false)
+                            }
+                        }
+                    }
+                }
             }
 
             command("suggest") {
