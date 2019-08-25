@@ -25,8 +25,7 @@ import org.slf4j.LoggerFactory
 //import net.jeremybrooks.knicker.WordsApi
 import java.net.URL
 import java.nio.charset.Charset
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.*
 import java.util.*
 import kotlin.system.exitProcess
 
@@ -88,6 +87,7 @@ suspend fun main() {
                     >abort - Stop the current game
                     >keybase [id] - Link your account to your keybase public key
                     >encrypt [message] [recipients] - Encrypt a message using the given recipients' public key
+                    >cal [method] - Link an online calendar
                     >suggest [suggestion] - Submit a suggestion to the shrewd starboard
                     >hq - Get a link to Shrewd HQ
                     >shutdown - Shutdown the bot
@@ -417,12 +417,17 @@ suspend fun main() {
                             .replaceBefore("://", "http")
                         val calendarText = khttp.get(calendarUrl).text
                         val calendar = Biweekly.parse(calendarText).first()
-                        val events = calendar.events// .all().subList(0, 1) // filter by only current week
+                        val today = LocalDate.now().atStartOfDay()
+                        val weekAway = today.plusWeeks(1)
+                        val events = calendar.events.filter { event ->
+                            val date = event.dateStart.value.toInstant()
+                            date.isAfter(today.toInstant(ZoneOffset.UTC)) && date.isBefore(weekAway.toInstant(ZoneOffset.UTC))
+                        }
                         reply {
                             with (this@command.author) {
                                 author = EmbedAuthor(username, authorImageUrl = pngAvatar())
                             }
-                            events.subList(0, 5).forEach { event -> // filter to this week
+                            events.forEach { event -> // filter to this week
                                 val name = event.summary.value
                                 val date = Date.from(event.dateStart.value.toInstant())
                                 val description = event.description.value
