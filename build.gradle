@@ -18,6 +18,7 @@ dependencies {
     implementation "com.github.PotatoCurry:Kwizlet:0.5.5"
     implementation "com.github.PotatoCurry:Kashoot:0.2.2"
     implementation "com.github.jkcclemens:khttp:0.1.0"
+//    implementation "fastily:jwiki:1.7.0"
     implementation "moe.tlaster:kotlinpgp:1.0.20"
     implementation "net.sf.biweekly:biweekly:0.6.3"
     implementation "me.xdrop:fuzzywuzzy:1.2.0"

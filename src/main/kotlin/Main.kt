@@ -8,6 +8,7 @@ import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
 import com.jessecorbett.diskord.util.*
+//import fastily.jwiki.core.Wiki
 import humanize.Humanize
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
@@ -81,6 +82,7 @@ suspend fun main() {
                     >http [method] [URL] (args) - Perform an HTTP request
                     >cave - Start a cave exploration game
                     >number [number] - Get interesting number facts
+                    >wiki [title] - Get a Wikipedia page by title
                     >quizlet [setURL/query] - Start a Quizlet trivia game
                     >kahoot [quizURL] - Start a Kahoot trivia game
                     >skip - Skip the current question
@@ -296,6 +298,18 @@ suspend fun main() {
                 response.encoding = Charset.defaultCharset()
                 reply(response.text)
             }
+
+//            command("wiki") {
+//                val article = words[1]
+//                val wiki = Wiki("io.github.potatocurry")
+//                val text = wiki.getTextExtract(article)
+//                val images = wiki.getImagesOnPage(article)
+//                reply {
+//                    title = article
+//                    description = text
+//                    image(images[0])
+//                }
+//            }
 
             command("quizlet") {
                 val setId = if ("http" in words[1])
