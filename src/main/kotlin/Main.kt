@@ -431,11 +431,11 @@ suspend fun main() {
                             .replaceBefore("://", "http")
                         val calendarText = khttp.get(calendarUrl).text
                         val calendar = Biweekly.parse(calendarText).first()
-                        val today = LocalDate.now().atStartOfDay()
+                        val today = LocalDate.now().atStartOfDay(ZoneId.systemDefault())
                         val weekAway = today.plusWeeks(1)
                         val events = calendar.events.filter { event ->
                             val date = event.dateStart.value.toInstant()
-                            date.isAfter(today.toInstant(ZoneOffset.UTC)) && date.isBefore(weekAway.toInstant(ZoneOffset.UTC))
+                            date.isAfter(today.toInstant()) && date.isBefore(weekAway.toInstant())
                         }
                         reply {
                             with (this@command.author) {
