@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 //import net.jeremybrooks.knicker.WordsApi
 import java.net.URL
 import java.nio.charset.Charset
+import java.text.SimpleDateFormat
 import java.time.*
 import java.util.*
 import kotlin.system.exitProcess
@@ -441,11 +442,12 @@ suspend fun main() {
                             with (this@command.author) {
                                 author = EmbedAuthor(username, authorImageUrl = pngAvatar())
                             }
-                            events.forEach { event -> // filter to this week
+                            events.forEach { event ->
                                 val name = event.summary.value
-                                val date = Date.from(event.dateStart.value.toInstant())
                                 val description = event.description.value
-                                field("$name (${Humanize.naturalTime(date)})", description, false)
+                                val date = Date.from(event.dateStart.value.toInstant())
+                                val dateFormat = SimpleDateFormat("EEE, MMM dd")
+                                field("$name (${dateFormat.format(date)})", description, false)
                             }
                         }
                     }
