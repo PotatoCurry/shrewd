@@ -402,6 +402,7 @@ suspend fun main() {
             }
 
             command("encrypt") {
+                delete()
                 val recipientKeys = usersMentioned.map { PublicKeyData(getKeybaseKey(it.id)) }
                 val encrypted = KotlinPGP.encrypt(
                     EncryptParameter(
@@ -409,7 +410,7 @@ suspend fun main() {
                         recipientKeys
                     )
                 )
-                replyAndDelete("```$encrypted```")
+                reply("```$encrypted```")
             }
 
             command("cal") {
