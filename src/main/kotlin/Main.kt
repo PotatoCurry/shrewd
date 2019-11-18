@@ -2,6 +2,7 @@
 package io.github.potatocurry.shrewd
 
 import biweekly.Biweekly
+import com.jessecorbett.diskord.api.model.Emoji
 import com.jessecorbett.diskord.api.model.Message
 import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
@@ -91,6 +92,7 @@ suspend fun main() {
                     >keybase [id] - Link your account to your keybase public key
                     >encrypt [message] [recipients] - Encrypt a message using the given recipients' public key
                     >cal [method] - Link an online calendar
+                    >meme [operation] (memeLink/attachment) - Stash or retrieve a meme
                     >suggest [suggestion] - Submit a suggestion to the shrewd starboard
                     >hq - Get a link to Shrewd HQ
                     >shutdown - Shutdown the bot
@@ -455,6 +457,61 @@ suspend fun main() {
                 }
             }
 
+            command("meme") {
+                when (words[1]) {
+                    "stash" -> {
+                        val memeLink = if (attachments.isNotEmpty())
+                            attachments.first().url // or proxyUrl?
+                        else
+                            args.removePrefix("stash ")
+                        stashMeme(memeLink, authorId) // create repost detection and send "NORMIE ALERT" and emojis
+                        reply("Meme stashed")
+                    }
+                    "random" -> {
+                        val response = khttp.get(
+                                "https://www.jsonstore.io/$jsonEndpoint/memes"
+                        ).jsonObject
+                        if (response.isNull("result"))
+                            reply("No memes available")
+                        else {
+                            val memes = response.getJSONArray("result")
+                            val memeJson = memes.toList().random() as JSONObject
+//                            val meme = memes.toList().random() as Meme
+                            val meme = Meme(
+                                    memeJson.getString("link"),
+                                    memeJson.getString("authorId"),
+                                    LocalDateTime.parse(memeJson.getString("time")),
+                                    memeJson.getInt("upvotes"),
+                                    memeJson.getInt("downvotes"),
+                                    memeJson.getInt("reports")
+                            )
+                            val poster = clientStore.discord.getUser(meme.authorId)
+                            val message = reply {
+                                author = EmbedAuthor(
+                                        name = poster.username,
+                                        authorImageUrl = poster.pngAvatar()
+                                        // TODO: Add discord link to user profile?
+                                )
+                                field(":thumbsup:", meme.upvotes.toString(), true)
+                                field(":thumbsdown:", meme.downvotes.toString(), true)
+                                field(":warning:", meme.reports.toString(), true)
+                                image(meme.link)
+                                timestamp = meme.time.toString()
+                            }
+                            message.react("\uD83D\uDC4D")
+                            message.react("👎")
+                            message.react("⚠️")
+                        }
+                    }
+                    "good" -> {
+
+                    }
+                    "bad" -> {
+
+                    }
+                }
+            }
+
             command("suggest") {
                 val message = ChannelClient(token, "604144590835941386").sendMessage("") {
                     with (this@command.author) {
@@ -580,3 +637,29 @@ fun getKeybaseKey(userId: String): String {
         .getJSONObject("primary")
         .getString("bundle")
 }
+
+fun stashMeme(memeLink: String, authorId: String) {
+    val meme = Meme(memeLink, authorId)
+    val response = khttp.get(
+            "https://www.jsonstore.io/$jsonEndpoint/memes"
+    ).jsonObject
+    val memes = if (response.isNull("result"))
+        JSONArray()
+    else
+        response.getJSONArray("result")
+    memes.put(JSONObject(meme))
+    khttp.post(
+            "https://www.jsonstore.io/$jsonEndpoint/memes",
+            json = memes
+    )
+    logger.debug("Stashed meme {} from {}", memeLink, authorId)
+}
+
+data class Meme(
+        val link: String,
+        val authorId: String,
+        val time: LocalDateTime = LocalDateTime.now(ZoneId.of("GMT")),
+        val upvotes: Int = 0,
+        val downvotes: Int = 0,
+        val reports: Int = 0
+)
