@@ -2,7 +2,6 @@
 package io.github.potatocurry.shrewd
 
 import biweekly.Biweekly
-import com.jessecorbett.diskord.api.model.Emoji
 import com.jessecorbett.diskord.api.model.Message
 import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
@@ -13,6 +12,7 @@ import com.jessecorbett.diskord.util.*
 import humanize.Humanize
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
+import io.github.potatocurry.shrewd.games.*
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
 import moe.tlaster.kotlinpgp.KotlinPGP
@@ -39,6 +39,20 @@ val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
 val games = mutableMapOf<String, Game>()
 val jsonEndpoint = System.getenv("SHREWD_JSONSTORE_TOKEN")
+
+val choiceMap = mapOf(
+        // Kahoot choices
+        "\uD83C\uDDE6" to "A",
+        "\uD83C\uDDE7" to "B",
+        "\uD83C\uDDE8" to "C",
+        "\uD83C\uDDE9" to "D",
+
+        // Cave directions
+        "\uD83C\uDDF3" to "N",
+        "\uD83C\uDDF8" to "S",
+        "\uD83C\uDDEA" to "E",
+        "\uD83C\uDDFC" to "W"
+)
 
 suspend fun main() {
     val env = System.getenv("SHREWD_ENV")
@@ -93,6 +107,7 @@ suspend fun main() {
                     >encrypt [message] [recipients] - Encrypt a message using the given recipients' public key
                     >cal [method] - Link an online calendar
                     >meme [operation] (memeLink/attachment) - Stash or retrieve a meme
+                    >xkcd [number] - Fetch an XKCD comic by number
                     >suggest [suggestion] - Submit a suggestion to the shrewd starboard
                     >hq - Get a link to Shrewd HQ
                     >shutdown - Shutdown the bot
@@ -510,6 +525,12 @@ suspend fun main() {
 
                     }
                 }
+            }
+
+            command("xkcd") {
+                val number = words[1].toInt()
+
+
             }
 
             command("suggest") {
