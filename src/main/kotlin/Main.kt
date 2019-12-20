@@ -2,9 +2,11 @@
 package io.github.potatocurry.shrewd
 
 import biweekly.Biweekly
+import com.beust.klaxon.Klaxon
 import com.jessecorbett.diskord.api.model.Message
 import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
+import com.jessecorbett.diskord.api.rest.EmbedImage
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
 import com.jessecorbett.diskord.util.*
@@ -13,6 +15,7 @@ import humanize.Humanize
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import io.github.potatocurry.shrewd.games.*
+import io.github.potatocurry.shrewd.models.XKCDComic
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
 import moe.tlaster.kotlinpgp.KotlinPGP
@@ -39,6 +42,7 @@ val kwizlet = Kwizlet(System.getenv("SHREWD_QUIZLET_TOKEN"))
 val kashoot = Kashoot()
 val games = mutableMapOf<String, Game>()
 val jsonEndpoint = System.getenv("SHREWD_JSONSTORE_TOKEN")
+val klaxon = Klaxon()
 
 val choiceMap = mapOf(
         // Kahoot choices
@@ -107,7 +111,7 @@ suspend fun main() {
                     >encrypt [message] [recipients] - Encrypt a message using the given recipients' public key
                     >cal [method] - Link an online calendar
                     >meme [operation] (memeLink/attachment) - Stash or retrieve a meme
-                    >xkcd [number] - Fetch an XKCD comic by number
+                    >xkcd (number) - Fetch an XKCD comic by number, defaults to latest
                     >suggest [suggestion] - Submit a suggestion to the shrewd starboard
                     >hq - Get a link to Shrewd HQ
                     >shutdown - Shutdown the bot
@@ -528,9 +532,27 @@ suspend fun main() {
             }
 
             command("xkcd") {
-                val number = words[1].toInt()
-
-
+                val number = words.getOrNull(1)
+                val comicJson = if (number == null) {
+                    val jsonUrl = "https://xkcd.com/info.0.json"
+                    khttp.get(jsonUrl).text
+                } else {
+                    val jsonUrl = "https://xkcd.com/$number/info.0.json"
+                    khttp.get(jsonUrl).text
+                }
+                val comic = klaxon.parse<XKCDComic>(comicJson)
+                if (comic != null)
+                    reply {
+                        title = comic.title
+                        description = comic.alt
+                        url = "https://xkcd.com/${comic.num}/"
+                        image(comic.img)
+                        timestamp = LocalDate.of(comic.year.toInt(), comic.month.toInt(), comic.day.toInt()).toString()
+                    }
+                else {
+                    reply("Error processing XKCD comic")
+                    logger.warn("Unable to parse JSON of XKCD comic {}", number)
+                }
             }
 
             command("suggest") {
