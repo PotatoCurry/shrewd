@@ -6,7 +6,6 @@ import com.beust.klaxon.Klaxon
 import com.jessecorbett.diskord.api.model.Message
 import com.jessecorbett.diskord.api.rest.CreateDM
 import com.jessecorbett.diskord.api.rest.EmbedAuthor
-import com.jessecorbett.diskord.api.rest.EmbedImage
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
 import com.jessecorbett.diskord.util.*
@@ -15,6 +14,7 @@ import humanize.Humanize
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
 import io.github.potatocurry.shrewd.games.*
+import io.github.potatocurry.shrewd.models.Summary
 import io.github.potatocurry.shrewd.models.XKCDComic
 import kotlinx.coroutines.delay
 import kotlinx.io.IOException
@@ -259,17 +259,18 @@ suspend fun main() {
             //TODO: Wolfram request method
 
             command("summary") {
-                val articleURL = words[1]
-                val smmry = getSMMRY(articleURL, 5)
-                val articleTitle = smmry.getString("sm_api_title")
-                val articleChars = smmry.getString("sm_api_character_count")
-                val articleReduction = smmry.getString("sm_api_content_reduced")
-                val articleSummary = smmry.getString("sm_api_content")
-                reply(articleSummary) {
-                    title = articleTitle
-                    url = articleURL
-                    field("Characters", articleChars, true)
-                    field("Reduction", articleReduction, true)
+                val articleURL = args
+                val summary = getSMMRY(articleURL, 5)
+                if (summary != null)
+                    reply(summary.content) { // TODO: Add keywords
+                        title = summary.title
+                        url = articleURL
+                        field("Characters", summary.characterCount, true)
+                        field("Reduction", summary.contentReduced, true)
+                    }
+                else {
+                    reply("Error processing article")
+                    logger.warn("Unable to parse JSON of article {}", articleURL)
                 }
             }
 
@@ -645,9 +646,9 @@ suspend fun main() {
 val Message.args: String
     get() = content.split(" ", limit = 2)[1]
 
-fun getSMMRY(articleURL: String, sentenceCount: Int = 7, keywordCount: Int = 5): JSONObject { // TODO: Make object for this when ported to edu(lib/kate)
+fun getSMMRY(articleURL: String, sentenceCount: Int = 7, keywordCount: Int = 5): Summary? {
     val smmryKey = System.getenv("SHREWD_SMMRY_KEY")
-    val response = khttp.get(
+    val summaryJson = khttp.get( // Causes NPE, perhaps due to lag
         "https://api.smmry.com",
         params = mapOf(
             "SM_API_KEY" to smmryKey,
@@ -655,8 +656,8 @@ fun getSMMRY(articleURL: String, sentenceCount: Int = 7, keywordCount: Int = 5):
             "SM_KEYWORD_COUNT" to keywordCount.toString(),
             "SM_URL" to articleURL
         )
-    )
-    return response.jsonObject
+    ).text
+    return klaxon.parse<Summary>(summaryJson)
 }
 
 fun getKeybaseKey(userId: String): String {
