@@ -535,22 +535,24 @@ suspend fun main() {
             }
 
             command("bash") {
-                val number = words.getOrNull(1) // TODO: Implement quote lookup by ID
-                val bashUrl = if (number == null)
-                    "http://bash.org/?random1"
-                else
-                    "http://bash.org/?$number"
+                val arg = words.getOrNull(1)
+                val bashUrl = when {
+                    arg == "top" -> "http://bash.org/?top"
+                    arg == "latest" -> "http://bash.org/?latest"
+                    arg?.toIntOrNull() != null -> "http://bash.org/?$arg"
+                    else -> "http://bash.org/?random1"
+                }
                 val document = Jsoup.connect(bashUrl).get()
-                val quoteElement = document.getElementsByClass("qt").first()
+                val quoteElement = document.getElementsByClass("qt").random()
                 val infoElement = quoteElement.previousElementSibling()
-                val idElement = infoElement.getElementsByTag("b").single()
+                val numberElement = infoElement.getElementsByTag("b").single()
                 val voteElement = infoElement.getElementsByTag("font")
                 val quote = quoteElement.wholeText()
-                val id = idElement.text().removePrefix("#")
+                val number = numberElement.text().removePrefix("#")
                 val vote = voteElement.text()
                 reply {
                     text = "```$quote```"
-                    field("ID", id, true)
+                    field("ID", number, true)
                     field("Votes", vote, true)
                 }
             }
