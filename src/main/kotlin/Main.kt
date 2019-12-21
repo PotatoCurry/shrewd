@@ -23,6 +23,7 @@ import moe.tlaster.kotlinpgp.data.EncryptParameter
 import moe.tlaster.kotlinpgp.data.PublicKeyData
 import org.json.JSONArray
 import org.json.JSONObject
+import org.jsoup.Jsoup
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 //import org.merriam_api.service.MerriamService
@@ -111,6 +112,7 @@ suspend fun main() {
                     >encrypt [message] [recipients] - Encrypt a message using the given recipients' public key
                     >cal [method] - Link an online calendar
                     >meme [operation] (memeLink/attachment) - Stash or retrieve a meme
+                    >bash (ID) - Get a random or specific quote from bash.org
                     >xkcd (number) - Fetch an XKCD comic by number, defaults to latest
                     >suggest [suggestion] - Submit a suggestion to the shrewd starboard
                     >hq - Get a link to Shrewd HQ
@@ -532,15 +534,34 @@ suspend fun main() {
                 }
             }
 
+            command("bash") {
+                val number = words.getOrNull(1) // TODO: Implement quote lookup by ID
+                val bashUrl = if (number == null)
+                    "http://bash.org/?random1"
+                else
+                    "http://bash.org/?$number"
+                val document = Jsoup.connect(bashUrl).get()
+                val quoteElement = document.getElementsByClass("qt").first()
+                val infoElement = quoteElement.previousElementSibling()
+                val idElement = infoElement.getElementsByTag("b").single()
+                val voteElement = infoElement.getElementsByTag("font")
+                val quote = quoteElement.wholeText()
+                val id = idElement.text().removePrefix("#")
+                val vote = voteElement.text()
+                reply {
+                    text = "```$quote```"
+                    field("ID", id, true)
+                    field("Votes", vote, true)
+                }
+            }
+
             command("xkcd") {
                 val number = words.getOrNull(1)
-                val comicJson = if (number == null) {
-                    val jsonUrl = "https://xkcd.com/info.0.json"
-                    khttp.get(jsonUrl).text
-                } else {
-                    val jsonUrl = "https://xkcd.com/$number/info.0.json"
-                    khttp.get(jsonUrl).text
-                }
+                val jsonUrl = if (number == null)
+                    "https://xkcd.com/info.0.json"
+                else
+                    "https://xkcd.com/$number/info.0.json"
+                val comicJson = khttp.get(jsonUrl).text
                 val comic = klaxon.parse<XKCDComic>(comicJson)
                 if (comic != null)
                     reply {
