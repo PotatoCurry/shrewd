@@ -1,6 +1,10 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 package io.github.potatocurry.shrewd
 
+//import fastily.jwiki.core.Wiki
+//import org.merriam_api.service.MerriamService
+//import net.jeremybrooks.knicker.WordApi
+//import net.jeremybrooks.knicker.WordsApi
 import biweekly.Biweekly
 import com.beust.klaxon.Klaxon
 import com.jessecorbett.diskord.api.model.Message
@@ -9,11 +13,14 @@ import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
 import com.jessecorbett.diskord.util.*
-//import fastily.jwiki.core.Wiki
 import humanize.Humanize
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
-import io.github.potatocurry.shrewd.games.*
+import io.github.potatocurry.shrewd.games.CaveGame
+import io.github.potatocurry.shrewd.games.Game
+import io.github.potatocurry.shrewd.games.KahootGame
+import io.github.potatocurry.shrewd.games.QuizletGame
+import io.github.potatocurry.shrewd.models.Meme
 import io.github.potatocurry.shrewd.models.Summary
 import io.github.potatocurry.shrewd.models.XKCDComic
 import kotlinx.coroutines.delay
@@ -26,13 +33,12 @@ import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-//import org.merriam_api.service.MerriamService
-//import net.jeremybrooks.knicker.WordApi
-//import net.jeremybrooks.knicker.WordsApi
 import java.net.URL
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
-import java.time.*
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.*
 import kotlin.system.exitProcess
 
@@ -721,12 +727,3 @@ fun stashMeme(memeLink: String, authorId: String) {
     )
     logger.debug("Stashed meme {} from {}", memeLink, authorId)
 }
-
-data class Meme(
-        val link: String,
-        val authorId: String,
-        val time: LocalDateTime = LocalDateTime.now(ZoneId.of("GMT")),
-        val upvotes: Int = 0,
-        val downvotes: Int = 0,
-        val reports: Int = 0
-)
