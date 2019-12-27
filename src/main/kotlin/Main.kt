@@ -705,19 +705,22 @@ fun getKeybaseKey(userId: String): String {
     val keybaseId = response
         .getJSONObject("result")
         .getString("keybase")
-    val keybaseUser = khttp.get(
-        "https://keybase.io/_/api/1.0/user/lookup.json",
-        params = mapOf(
-            "usernames" to keybaseId,
-            "fields" to "public_keys"
-        )
-    ).jsonObject
-    return keybaseUser
-        .getJSONArray("them")
-        .getJSONObject(0)
-        .getJSONObject("public_keys")
-        .getJSONObject("primary")
-        .getString("bundle")
+
+//    val keybaseUser = khttp.get(
+//        "https://keybase.io/_/api/1.0/user/lookup.json",
+//        params = mapOf(
+//            "usernames" to keybaseId,
+//            "fields" to "public_keys"
+//        )
+//    ).jsonObject
+//    return keybaseUser
+//        .getJSONArray("them")
+//        .getJSONObject(0)
+//        .getJSONObject("public_keys")
+//        .getJSONObject("primary")
+//        .getString("bundle")
+
+    return khttp.get("https://keybase.io/$keybaseId/pgp_keys.asc").text // TODO: See how this functions for multiple keys
 }
 
 fun stashMeme(memeLink: String, authorId: String) {
