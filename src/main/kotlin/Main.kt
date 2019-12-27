@@ -302,12 +302,11 @@ suspend fun main() {
                     val game = CaveGame(channel, author)
                     games[channelId] = game
                     game.run {
+                        val initialSeed = room.locationPath.split("/").last()
                         reply {
                             title = "Cave Exploration"
-                            description = game.intro
-                            with (this@command.author) {
-                                author = EmbedAuthor(username, authorImageUrl = pngAvatar())
-                            }
+                            description = room.message
+                            author = EmbedAuthor(creator.username, authorImageUrl = creator.pngAvatar())
                             field("Instructions", "Navigate with single character directions or reactions", true)
                             field("Seed", initialSeed, true)
                         }
@@ -315,14 +314,12 @@ suspend fun main() {
                         delay(2500)
                         currentMessage = reply {
                             title = "Cave Exploration"
-                            description = initialDescription
-                            with (creator) {
-                                author = EmbedAuthor(username, authorImageUrl = pngAvatar())
-                            }
-                            field("Exits", Humanize.oxford(initialExits), true)
+                            description = room.description
+                            author = EmbedAuthor(creator.username, authorImageUrl = creator.pngAvatar())
+                            field("Exits", Humanize.oxford(room.exits), true)
                         }.apply {
-                            for (exit in initialExits)
-                                react(emojiMap.getValue(exit.toString()))
+                            for (exit in room.exits)
+                                react(emojiMap.getValue(exit))
                         }.id
                     }
                 }
