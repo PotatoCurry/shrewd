@@ -296,31 +296,35 @@ suspend fun main() {
             }
 
             command("cave") {
-                val game = CaveGame(channel, author)
-                games[channelId] = game
-                game.run {
-                    reply {
-                        title = "Cave Exploration"
-                        description = game.intro
-                        with (this@command.author) {
-                            author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                if (games[channelId] != null)
+                    reply("Game already running in this channel")
+                else {
+                    val game = CaveGame(channel, author)
+                    games[channelId] = game
+                    game.run {
+                        reply {
+                            title = "Cave Exploration"
+                            description = game.intro
+                            with (this@command.author) {
+                                author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                            }
+                            field("Instructions", "Navigate with single character directions or reactions", true)
+                            field("Seed", initialSeed, true)
                         }
-                        field("Instructions", "Navigate with single character directions or reactions", true)
-                        field("Seed", initialSeed, true)
-                    }
 
-                    delay(2500)
-                    currentMessage = reply {
-                        title = "Cave Exploration"
-                        description = initialDescription
-                        with (creator) {
-                            author = EmbedAuthor(username, authorImageUrl = pngAvatar())
-                        }
-                        field("Exits", Humanize.oxford(initialExits), true)
-                    }.apply {
-                        for (exit in initialExits)
-                            react(emojiMap.getValue(exit.toString()))
-                    }.id
+                        delay(2500)
+                        currentMessage = reply {
+                            title = "Cave Exploration"
+                            description = initialDescription
+                            with (creator) {
+                                author = EmbedAuthor(username, authorImageUrl = pngAvatar())
+                            }
+                            field("Exits", Humanize.oxford(initialExits), true)
+                        }.apply {
+                            for (exit in initialExits)
+                                react(emojiMap.getValue(exit.toString()))
+                        }.id
+                    }
                 }
             }
 
@@ -343,41 +347,49 @@ suspend fun main() {
 //            }
 
             command("quizlet") {
-                val setId = if ("http" in words[1])
-                    kwizlet.parseURL(URL(words[1]))
-                else
-                    kwizlet.search(words.drop(1).joinToString(" ")).searchSets[0].id.toString()
-                val game = QuizletGame(channel, author, setId)
-                games[channelId] = game
-                game.run {
-                    reply {
-                        title = set.title
-                        description = set.description
-                        author = EmbedAuthor(set.author)
-                        field("Total Terms", set.termCount.toString(), false)
-                    }
+                if (games[channelId] != null)
+                    reply("Game already running in this channel")
+                else {
+                    val setId = if ("http" in words[1])
+                        kwizlet.parseURL(URL(words[1])) // TODO: Find out if URL class is not recommended
+                    else
+                        kwizlet.search(words.drop(1).joinToString(" ")).searchSets[0].id.toString()
+                    val game = QuizletGame(channel, author, setId)
+                    games[channelId] = game
+                    game.run {
+                        reply {
+                            title = set.title
+                            description = set.description
+                            author = EmbedAuthor(set.author)
+                            field("Total Terms", set.termCount.toString(), false)
+                        }
 
-                    delay(2500)
-                    sendQuestion()
+                        delay(2500)
+                        sendQuestion()
+                    }
                 }
             }
 
             command("kahoot") {
-                reply("Kahoot games are undergoing a major overhaul and are not yet stable")
-                val kahootPath = URL(words[1]).path.split("/")
-                val quizId = kahootPath.last(String::isNotEmpty)
-                val game = KahootGame(channel, author, quizId)
-                games[channelId] = game
-                game.run {
-                    reply {
-                        title = quiz.title
-                        description = quiz.description
-                        author = EmbedAuthor(quiz.creator)
-                        field("Total Terms", quiz.questions.size.toString(), false)
-                    }
+                if (games[channelId] != null)
+                    reply("Game already running in this channel")
+                else {
+                    reply("Kahoot games are undergoing a major overhaul and are not yet stable")
+                    val kahootPath = URL(words[1]).path.split("/")
+                    val quizId = kahootPath.last(String::isNotEmpty)
+                    val game = KahootGame(channel, author, quizId)
+                    games[channelId] = game
+                    game.run {
+                        reply {
+                            title = quiz.title
+                            description = quiz.description
+                            author = EmbedAuthor(quiz.creator)
+                            field("Total Terms", quiz.questions.size.toString(), false)
+                        }
 
-                    delay(2500)
-                    game.start()
+                        delay(2500)
+                        game.start()
+                    }
                 }
             }
 
