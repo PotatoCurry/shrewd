@@ -19,6 +19,7 @@ import com.kennycason.kumo.WordCloud
 import com.kennycason.kumo.bg.CircleBackground
 import com.kennycason.kumo.font.scale.SqrtFontScalar
 import com.kennycason.kumo.nlp.FrequencyAnalyzer
+import com.kennycason.kumo.nlp.filter.Filter
 import com.kennycason.kumo.nlp.tokenizer.WhiteSpaceWordTokenizer
 import com.kennycason.kumo.palette.ColorPalette
 import humanize.Humanize
@@ -616,6 +617,7 @@ suspend fun main() {
                 }
                 val frequencyAnalyzer = FrequencyAnalyzer().apply {
                     setWordTokenizer(WhiteSpaceWordTokenizer())
+                    setMinWordLength(5)
                     setMaxWordLength(16)
                 }
 
