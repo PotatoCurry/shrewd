@@ -616,6 +616,7 @@ suspend fun main() {
                 }
                 val frequencyAnalyzer = FrequencyAnalyzer().apply {
                     setWordTokenizer(WhiteSpaceWordTokenizer())
+                    setMaxWordLength(16)
                 }
 
                 val wordFrequencies = frequencyAnalyzer.load(messages.map(Message::content))
