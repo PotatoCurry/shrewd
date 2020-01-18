@@ -5,6 +5,7 @@ package io.github.potatocurry.shrewd
 //import org.merriam_api.service.MerriamService
 //import net.jeremybrooks.knicker.WordApi
 //import net.jeremybrooks.knicker.WordsApi
+
 import biweekly.Biweekly
 import com.beust.klaxon.Klaxon
 import com.jessecorbett.diskord.api.model.Message
@@ -13,6 +14,13 @@ import com.jessecorbett.diskord.api.rest.EmbedAuthor
 import com.jessecorbett.diskord.api.rest.client.ChannelClient
 import com.jessecorbett.diskord.dsl.*
 import com.jessecorbett.diskord.util.*
+import com.kennycason.kumo.CollisionMode
+import com.kennycason.kumo.WordCloud
+import com.kennycason.kumo.bg.CircleBackground
+import com.kennycason.kumo.font.scale.SqrtFontScalar
+import com.kennycason.kumo.nlp.FrequencyAnalyzer
+import com.kennycason.kumo.nlp.tokenizer.WhiteSpaceWordTokenizer
+import com.kennycason.kumo.palette.ColorPalette
 import humanize.Humanize
 import io.github.potatocurry.kashoot.api.Kashoot
 import io.github.potatocurry.kwizlet.api.Kwizlet
@@ -24,6 +32,7 @@ import io.github.potatocurry.shrewd.models.Meme
 import io.github.potatocurry.shrewd.models.Summary
 import io.github.potatocurry.shrewd.models.XKCDComic
 import kotlinx.coroutines.delay
+import kotlinx.io.ByteArrayOutputStream
 import kotlinx.io.IOException
 import moe.tlaster.kotlinpgp.KotlinPGP
 import moe.tlaster.kotlinpgp.data.EncryptParameter
@@ -33,6 +42,8 @@ import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.awt.Color
+import java.awt.Dimension
 import java.net.URL
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
@@ -41,6 +52,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
 import kotlin.system.exitProcess
+
 
 val logger: Logger = LoggerFactory.getLogger("io.github.potatocurry.shrewd")
 lateinit var globalClient: ClientStore
@@ -120,6 +132,7 @@ suspend fun main() {
                     >meme [operation] (memeLink/attachment) - Stash or retrieve a meme
                     >bash (ID) - Get a random or specific quote from bash.org
                     >xkcd (number) - Fetch an XKCD comic by number, defaults to latest
+                    >cloud - Generate a word cloud from a channel's message history
                     >suggest [suggestion] - Submit a suggestion to the shrewd starboard
                     >hq - Get a link to Shrewd HQ
                     >shutdown - Shutdown the bot
@@ -592,6 +605,38 @@ suspend fun main() {
                     reply("Error processing XKCD comic")
                     logger.warn("Unable to parse JSON of XKCD comic {}", number)
                 }
+            }
+
+            command("cloud") {
+                val messages = channel.getMessages(100).map(Message::content)
+                println(messages)
+                val frequencyAnalyzer = FrequencyAnalyzer().apply {
+                    setWordTokenizer(WhiteSpaceWordTokenizer())
+                }
+                val wordFrequencies = frequencyAnalyzer.load(messages)
+                println(wordFrequencies)
+                val dimension = Dimension(600, 600)
+                val wordCloud = WordCloud(dimension, CollisionMode.PIXEL_PERFECT).apply {
+                    setPadding(2)
+                    setBackground(CircleBackground(300))
+                    setColorPalette(
+                        ColorPalette(
+                            Color(0x4055F1),
+                            Color(0x408DF1),
+                            Color(0x40AAF1),
+                            Color(0x40C5F1),
+                            Color(0x40D3F1),
+                            Color(0xFFFFFF)
+                        )
+                    )
+                    setFontScalar(SqrtFontScalar(10, 40))
+                    build(wordFrequencies)
+                }
+                val imageStream = ByteArrayOutputStream()
+                wordCloud.writeToStreamAsPNG(imageStream)
+                val imageName = "${author.username}.png"
+                val imageData = imageStream.toByteArray().toFileData(imageName)
+                channel.sendFile(imageData)
             }
 
             command("suggest") {
