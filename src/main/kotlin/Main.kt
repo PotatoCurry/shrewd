@@ -609,12 +609,11 @@ suspend fun main() {
 
             command("cloud") {
                 val messages = channel.getMessages(100).map(Message::content)
-                println(messages)
                 val frequencyAnalyzer = FrequencyAnalyzer().apply {
                     setWordTokenizer(WhiteSpaceWordTokenizer())
                 }
+
                 val wordFrequencies = frequencyAnalyzer.load(messages)
-                println(wordFrequencies)
                 val dimension = Dimension(600, 600)
                 val wordCloud = WordCloud(dimension, CollisionMode.PIXEL_PERFECT).apply {
                     setPadding(2)
@@ -632,6 +631,7 @@ suspend fun main() {
                     setFontScalar(SqrtFontScalar(10, 40))
                     build(wordFrequencies)
                 }
+                
                 val imageStream = ByteArrayOutputStream()
                 wordCloud.writeToStreamAsPNG(imageStream)
                 val imageName = "${author.username}.png"
