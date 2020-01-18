@@ -610,7 +610,7 @@ suspend fun main() {
             command("cloud") {
                 val messages = mutableListOf<Message>()
                 var lastMessageId = id
-                repeat(5) {
+                repeat(10) {
                     messages += channel.getMessagesBefore(100, lastMessageId)
                     lastMessageId = messages.last().id
                 }
