@@ -28,7 +28,7 @@ dependencies {
     implementation "com.beust:klaxon:5.2"
     implementation "org.jsoup:jsoup:1.12.1"
     implementation "com.kennycason:kumo-core:1.22"
-    implementation "org.slf4j:slf4j-api:1.7.29"
+    implementation "org.slf4j:slf4j-api:1.7.30"
     implementation "ch.qos.logback:logback-classic:1.2.3"
     implementation "io.sentry:sentry-logback:1.7.29"
 }
