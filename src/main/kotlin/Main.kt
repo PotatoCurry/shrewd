@@ -19,7 +19,6 @@ import com.kennycason.kumo.WordCloud
 import com.kennycason.kumo.bg.CircleBackground
 import com.kennycason.kumo.font.scale.SqrtFontScalar
 import com.kennycason.kumo.nlp.FrequencyAnalyzer
-import com.kennycason.kumo.nlp.filter.Filter
 import com.kennycason.kumo.nlp.tokenizer.WhiteSpaceWordTokenizer
 import com.kennycason.kumo.palette.ColorPalette
 import humanize.Humanize
@@ -642,7 +641,7 @@ suspend fun main() {
 
                 val imageStream = ByteArrayOutputStream()
                 wordCloud.writeToStreamAsPNG(imageStream)
-                val imageName = "${author.username}.png"
+                val imageName = "${channel.get().name}.png"
                 val imageData = imageStream.toByteArray().toFileData(imageName)
                 channel.sendFile(imageData)
             }
