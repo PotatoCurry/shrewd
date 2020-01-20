@@ -17,6 +17,7 @@ import com.jessecorbett.diskord.util.*
 import com.kennycason.kumo.CollisionMode
 import com.kennycason.kumo.WordCloud
 import com.kennycason.kumo.bg.CircleBackground
+import com.kennycason.kumo.bg.PixelBoundryBackground
 import com.kennycason.kumo.font.scale.SqrtFontScalar
 import com.kennycason.kumo.nlp.FrequencyAnalyzer
 import com.kennycason.kumo.nlp.tokenizer.WhiteSpaceWordTokenizer
@@ -132,7 +133,7 @@ suspend fun main() {
                     >meme [operation] (memeLink/attachment) - Stash or retrieve a meme
                     >bash (ID) - Get a random or specific quote from bash.org
                     >xkcd (number) - Fetch an XKCD comic by number, defaults to latest
-                    >cloud - Generate a word cloud from a channel's message history
+                    >cloud (user) (shapeURL) - Generate a word cloud from a channel's message history
                     >suggest [suggestion] - Submit a suggestion to the shrewd starboard
                     >hq - Get a link to Shrewd HQ
                     >shutdown - Shutdown the bot
@@ -614,17 +615,27 @@ suspend fun main() {
                     messages += channel.getMessagesBefore(100, lastMessageId)
                     lastMessageId = messages.last().id
                 }
+                val filteredMessages = if (usersMentioned.isNotEmpty())
+                    messages.filter { usersMentioned.contains(it.author) }
+                else
+                    messages
                 val frequencyAnalyzer = FrequencyAnalyzer().apply {
                     setWordTokenizer(WhiteSpaceWordTokenizer())
                     setMinWordLength(5)
                     setMaxWordLength(16)
                 }
 
-                val wordFrequencies = frequencyAnalyzer.load(messages.map(Message::content))
+                val wordFrequencies = frequencyAnalyzer.load(filteredMessages.map(Message::content))
                 val dimension = Dimension(600, 600)
                 val wordCloud = WordCloud(dimension, CollisionMode.PIXEL_PERFECT).apply {
                     setPadding(2)
-                    setBackground(CircleBackground(300))
+                    val customBackground = attachments.firstOrNull()?.url
+                    setBackground(
+                        if (customBackground == null)
+                            CircleBackground(300)
+                        else
+                            PixelBoundryBackground(customBackground)
+                    )
                     setColorPalette(
                         ColorPalette(
                             Color(0x4055F1),
