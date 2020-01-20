@@ -634,7 +634,7 @@ suspend fun main() {
                         if (customBackground == null)
                             CircleBackground(300)
                         else
-                            PixelBoundryBackground(customBackground)
+                            PixelBoundryBackground(URL(customBackground).openStream())
                     )
                     setColorPalette(
                         ColorPalette(
