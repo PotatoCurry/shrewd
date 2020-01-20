@@ -133,7 +133,7 @@ suspend fun main() {
                     >meme [operation] (memeLink/attachment) - Stash or retrieve a meme
                     >bash (ID) - Get a random or specific quote from bash.org
                     >xkcd (number) - Fetch an XKCD comic by number, defaults to latest
-                    >cloud (user) (shapeURL) - Generate a word cloud from a channel's message history
+                    >cloud (user) (backgroundAttachment) - Generate a word cloud from a channel's message history
                     >suggest [suggestion] - Submit a suggestion to the shrewd starboard
                     >hq - Get a link to Shrewd HQ
                     >shutdown - Shutdown the bot
