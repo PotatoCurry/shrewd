@@ -13,7 +13,6 @@ import io.github.potatocurry.shrewd.games
 import io.github.potatocurry.shrewd.klaxon
 import io.github.potatocurry.shrewd.logger
 import io.github.potatocurry.shrewd.models.Room
-import kotlinx.serialization.json.JSON
 
 class CaveGame(channel: ChannelClient, creator: User): Game(channel, creator) {
     var room: Room

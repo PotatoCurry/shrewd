@@ -498,7 +498,11 @@ suspend fun main() {
                             }
                             events.forEach { event ->
                                 val name = event.summary.value
-                                val description = event.description.value
+                                val eventDescription = event.description.value
+                                val description = if (eventDescription.length > 1024)
+                                    "${eventDescription.take(1021)}..."
+                                else
+                                    eventDescription
                                 val date = Date.from(event.dateStart.value.toInstant())
                                 val dateFormat = SimpleDateFormat("EEE, MMM dd")
                                 field("$name (${dateFormat.format(date)})", description, false)
