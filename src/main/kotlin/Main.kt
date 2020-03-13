@@ -95,21 +95,6 @@ suspend fun main() {
     bot(token) {
         globalClient = clientStore
 
-        started {
-            val dm = clientStore.discord.createDM(CreateDM("245007207102545921"))
-            ChannelClient(token, dm.id).sendMessage("") {
-                description = "Bot Started"
-                field("Environment", if (env == "PROD") "Production" else "Development", true)
-//                field("Guilds", clientStore.discord.getGuilds().size.toString(), true)
-                timestamp = LocalDateTime.now(ZoneId.of("GMT")).toString()
-            }
-            logger.info("Startup message sent")
-
-//            fixedRateTimer("Rich Presence", true, 0L, 60000) {
-//
-//            }
-        }
-
         commands(">") {
             command("help") {
                 reply(
