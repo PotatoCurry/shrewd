@@ -335,7 +335,7 @@ suspend fun main() {
                 val arg = words.getOrNull(1)
                 val cameraId = arg?.toIntOrNull() ?: (0..105).random()
                 reply {
-                    image("https://its.sugarlandtx.gov/trafficcameraview/image/$cameraId")
+                    image("https://its.sugarlandtx.gov/trafficcameraview/image/$cameraId?_=${System.currentTimeMillis()}")
                 }
             }
 
