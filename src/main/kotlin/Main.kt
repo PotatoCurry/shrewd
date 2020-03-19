@@ -107,6 +107,7 @@ suspend fun main() {
                     >http [method] [URL] (args) - Perform an HTTP request
                     >cave - Start a cave exploration game
                     >number [number] - Get interesting number facts
+                    >traffic (ID) - Get a random or specific picture from an SLTX traffic camera
                     >wiki [title] - Get a Wikipedia page by title
                     >quizlet [setURL/query] - Start a Quizlet trivia game
                     >kahoot [quizURL] - Start a Kahoot trivia game
@@ -328,6 +329,14 @@ suspend fun main() {
                 val response = khttp.get("http://numbersapi.com/${words[1]}")
                 response.encoding = Charset.defaultCharset()
                 reply(response.text)
+            }
+
+            command("traffic") {
+                val arg = words.getOrNull(1)
+                val cameraId = arg?.toIntOrNull() ?: (0..105).random()
+                reply {
+                    image("https://its.sugarlandtx.gov/trafficcameraview/image/$cameraId")
+                }
             }
 
 //            command("wiki") {
