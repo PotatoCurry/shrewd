@@ -34,7 +34,6 @@ import io.github.potatocurry.shrewd.models.Summary
 import io.github.potatocurry.shrewd.models.XKCDComic
 import kotlinx.coroutines.delay
 import kotlinx.io.ByteArrayOutputStream
-import kotlinx.io.IOException
 import moe.tlaster.kotlinpgp.KotlinPGP
 import moe.tlaster.kotlinpgp.data.EncryptParameter
 import moe.tlaster.kotlinpgp.data.PublicKeyData
@@ -45,6 +44,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.awt.Color
 import java.awt.Dimension
+import java.io.IOException
 import java.net.URL
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
